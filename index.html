@@ -369,9 +369,9 @@ function switchTab(name,el){
 }
 function openModal(id){document.getElementById(id).classList.add("open")}
 function closeModal(id){document.getElementById(id).classList.remove("open")}
-let loadingToast;
-function setLoading(msg){loadingToast=toast(msg,"info",0)}
-function clearLoading(){loadingToast?.remove?.()}
+let loadingToast,loadingTimer;
+function setLoading(msg){clearLoading();loadingToast=toast(msg,"info",0);loadingTimer=setTimeout(()=>clearLoading(),30000)}
+function clearLoading(){clearTimeout(loadingTimer);loadingToast?.remove?.();loadingToast=null}
 function toast(msg,type="info",duration=4000){
   const area=document.getElementById("toast-area");const el=document.createElement("div");
   el.className=`toast ${type}`;el.innerHTML=`<div class="toast-dot"></div><span>${escHtml(msg)}</span>`;
