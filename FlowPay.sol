@@ -13,10 +13,11 @@ contract FlowPay {
     uint256 public constant INTERVAL_HOURLY  = 1 hours;
     uint256 public constant INTERVAL_DAILY   = 1 days;
     uint256 public constant INTERVAL_WEEKLY  = 7 days;
+    uint256 public constant INTERVAL_THIRTY_MIN = 30 minutes;
     uint256 public constant INTERVAL_MONTHLY = 30 days;
     uint256 public constant MAX_STREAMS_PER_USER = 20;
 
-    enum Interval { Hourly, Daily, Weekly, Monthly }
+    enum Interval { ThirtyMin, Hourly, Daily, Weekly, Monthly }
 
     struct Stream {
         uint256 id;
@@ -118,6 +119,7 @@ contract FlowPay {
     function streamBalance(uint256 streamId) external view streamExists(streamId) returns (uint256) { return _streamBalance(streams[streamId]); }
     function nextDueTime(uint256 streamId) external view streamExists(streamId) returns (uint256) { return _nextDueTime(streams[streamId]); }
     function intervalSeconds(Interval interval) public pure returns (uint256) {
+        if (interval == Interval.ThirtyMin) return INTERVAL_THIRTY_MIN;
         if (interval == Interval.Hourly)  return INTERVAL_HOURLY;
         if (interval == Interval.Daily)   return INTERVAL_DAILY;
         if (interval == Interval.Weekly)  return INTERVAL_WEEKLY;

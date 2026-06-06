@@ -161,7 +161,7 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
             <div class="field"><label class="field-label" for="f-recipient">Recipient Address</label><input class="field-input" id="f-recipient" type="text" placeholder="0x..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"/></div>
             <div class="two-col">
               <div class="field"><label class="field-label" for="f-amount">Amount per Payment</label><input class="field-input" id="f-amount" type="number" placeholder="100" min="0.01" step="any"/><span class="field-hint">USDC</span></div>
-              <div class="field"><label class="field-label" for="f-interval">Frequency</label><select class="field-select" id="f-interval"><option value="0">Hourly</option><option value="1" selected>Daily</option><option value="2">Weekly</option><option value="3">Monthly</option></select></div>
+              <div class="field"><label class="field-label" for="f-interval">Frequency</label><select class="field-select" id="f-interval"><option value="0">30 Minutes</option><option value="1">Hourly</option><option value="2" selected>Daily</option><option value="3">Weekly</option><option value="4">Monthly</option></select></div>
             </div>
             <div class="field"><label class="field-label" for="f-deposit">Initial Deposit</label><input class="field-input" id="f-deposit" type="number" placeholder="500" min="0.01" step="any"/><span class="field-hint">Must be >= one payment amount. Remaining balance is refundable.</span></div>
             <div class="divider" style="margin:0"></div>
@@ -210,10 +210,10 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
 <script>
 const ARC_CHAIN_ID=5042002;
 const ARC_RPC="https://arc-testnet.drpc.org";
-const FLOWPAY_ADDR="0xbae847c54A5D77C028F194E0D77231fb8e698312";
+const FLOWPAY_ADDR="0xC839285AC88A2446B6D22172870cb36c592bCE94";
 const USDC_ADDR="0x3600000000000000000000000000000000000000";
-const INTERVALS=["Hourly","Daily","Weekly","Monthly"];
-const INTERVAL_SECONDS=[3600,86400,604800,2592000];
+const INTERVALS=["30 Min","Hourly","Daily","Weekly","Monthly"];
+const INTERVAL_SECONDS=[1800,3600,86400,604800,2592000];
 const FLOWPAY_ABI=["function createStream(address recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label) returns (uint256)","function executePayment(uint256 streamId)","function topUp(uint256 streamId,uint256 amount)","function cancelStream(uint256 streamId)","function getStream(uint256 streamId) view returns (tuple(uint256 id,address sender,address recipient,uint256 amountPerInterval,uint8 interval,uint256 startTime,uint256 lastExecuted,uint256 totalDeposited,uint256 totalPaid,bool active,string label))","function getUserStreams(address user) view returns (uint256[])","function streamBalance(uint256 streamId) view returns (uint256)","function nextDueTime(uint256 streamId) view returns (uint256)","event StreamCreated(uint256 indexed streamId,address indexed sender,address indexed recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label)"];
 const ERC20_ABI=["function balanceOf(address) view returns (uint256)","function allowance(address owner,address spender) view returns (uint256)","function approve(address spender,uint256 amount) returns (bool)"];
 let provider,signer,address,flowpay,usdc,topupStreamId,createStep="preview";
@@ -411,7 +411,7 @@ document.querySelectorAll(".modal-overlay").forEach(o=>o.addEventListener("click
 <script>
 const ARC_CHAIN_ID=5042002;
 const ARC_RPC="https://arc-testnet.drpc.org";
-const FLOWPAY_ADDR="0xbae847c54A5D77C028F194E0D77231fb8e698312";
+const FLOWPAY_ADDR="0xC839285AC88A2446B6D22172870cb36c592bCE94";
 const USDC_ADDR="0x3600000000000000000000000000000000000000";
 const INTERVALS=["Hourly","Daily","Weekly","Monthly"];
 const INTERVAL_SECONDS=[3600,86400,604800,2592000];

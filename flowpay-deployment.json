@@ -1,5 +1,5 @@
 {
-  "address": "0xbae847c54A5D77C028F194E0D77231fb8e698312",
+  "address": "0xC839285AC88A2446B6D22172870cb36c592bCE94",
   "chainId": 5042002,
   "abi": [
     {
@@ -161,6 +161,19 @@
     {
       "inputs": [],
       "name": "INTERVAL_MONTHLY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "INTERVAL_THIRTY_MIN",
       "outputs": [
         {
           "internalType": "uint256",
@@ -539,5 +552,5 @@
       "type": "function"
     }
   ],
-  "deployedAt": "2026-06-06T14:54:24.304Z"
+  "deployedAt": "2026-06-06T19:52:38.567Z"
 }
