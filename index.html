@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlowPay — Recurring Payments on Arc</title>
+<meta name="description" content="Permissionless recurring USDC payments on Arc Testnet." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg-0:#0a0a0b;--bg-1:#111114;--bg-2:#18181d;--bg-3:#1f1f26;
+--border:#2a2a34;--border-2:#383845;
+--text-0:#f0f0f4;--text-1:#a8a8b8;--text-2:#6a6a7a;--text-3:#44444f;
+--accent:#4f8ef7;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;
+--radius:6px;--font-body:'DM Sans',system-ui,sans-serif;--font-mono:'DM Mono','Courier New',monospace}
+html{font-size:15px}
+body{background:var(--bg-0);color:var(--text-0);font-family:var(--font-body);font-weight:400;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+.app{display:flex;flex-direction:column;min-height:100vh}
+header{position:sticky;top:0;z-index:100;background:rgba(10,10,11,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.logo{display:flex;align-items:center;gap:0.6rem}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-name{font-size:0.95rem;font-weight:600;letter-spacing:0.02em;color:var(--text-0)}
+.logo-tag{font-size:0.65rem;font-family:var(--font-mono);color:var(--text-2);letter-spacing:0.06em;text-transform:uppercase;background:var(--bg-3);padding:0.15rem 0.4rem;border-radius:3px;border:1px solid var(--border)}
+.header-right{display:flex;align-items:center;gap:0.75rem}
+.network-badge{font-family:var(--font-mono);font-size:0.7rem;color:var(--green);background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);padding:0.25rem 0.6rem;border-radius:3px;letter-spacing:0.04em;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;font-family:var(--font-body);font-size:0.85rem;font-weight:500;line-height:1;padding:0.55rem 1rem;border-radius:var(--radius);border:1px solid transparent;cursor:pointer;transition:all 0.15s ease;white-space:nowrap;user-select:none;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(0.98)}.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover:not(:disabled){background:#3d7ce8;border-color:#3d7ce8}
+.btn-secondary{background:var(--bg-3);color:var(--text-0);border-color:var(--border-2)}
+.btn-secondary:hover:not(:disabled){background:#26262f}
+.btn-ghost{background:transparent;color:var(--text-1);border-color:transparent;padding:0.55rem 0.75rem}
+.btn-ghost:hover:not(:disabled){color:var(--text-0);background:var(--bg-2)}
+.btn-danger{background:transparent;color:var(--red);border-color:rgba(239,68,68,0.25)}
+.btn-danger:hover:not(:disabled){background:rgba(239,68,68,0.08)}
+.btn-sm{font-size:0.78rem;padding:0.38rem 0.7rem}.btn-full{width:100%}
+main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
+#connect-wall{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:1.5rem}
+.connect-title{font-size:2rem;font-weight:600;letter-spacing:-0.03em;color:var(--text-0);line-height:1.2}
+.connect-sub{font-size:0.95rem;color:var(--text-2);max-width:380px;line-height:1.65}
+.connect-sub span{font-family:var(--font-mono);color:var(--accent);font-size:0.85em}
+#app-view{display:none}
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:2rem;overflow:hidden}
+.stat-cell{background:var(--bg-1);padding:1rem 1.2rem}
+.stat-label{font-size:0.7rem;font-family:var(--font-mono);color:var(--text-2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.3rem}
+.stat-value{font-size:1.3rem;font-weight:600;color:var(--text-0);font-feature-settings:"tnum";letter-spacing:-0.02em}
+.stat-value.accent{color:var(--accent)}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.75rem}
+.tab{font-family:var(--font-body);font-size:0.82rem;font-weight:500;color:var(--text-2);background:transparent;border:none;border-bottom:2px solid transparent;padding:0.65rem 1.1rem;cursor:pointer;transition:all 0.12s ease;margin-bottom:-1px;-webkit-tap-highlight-color:transparent}
+.tab:hover{color:var(--text-1)}.tab.active{color:var(--text-0);border-bottom-color:var(--accent)}
+.card{background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.card-title{font-size:0.82rem;font-weight:500;color:var(--text-1);letter-spacing:0.02em;text-transform:uppercase;font-family:var(--font-mono)}
+.card-body{padding:1.25rem}
+.form-grid{display:grid;gap:1rem}
+.field{display:flex;flex-direction:column;gap:0.4rem}
+.field-label{font-size:0.75rem;font-weight:500;color:var(--text-2);letter-spacing:0.03em;text-transform:uppercase;font-family:var(--font-mono)}
+.field-input,.field-select{background:var(--bg-0);border:1px solid var(--border-2);color:var(--text-0);font-family:var(--font-body);font-size:0.9rem;padding:0.65rem 0.85rem;border-radius:var(--radius);width:100%;transition:border-color 0.12s ease;-webkit-appearance:none;appearance:none;outline:none}
+.field-input:focus,.field-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,0.1)}
+.field-input::placeholder{color:var(--text-3)}
+.field-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236a6a7a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.85rem center;padding-right:2.2rem;cursor:pointer}
+.field-select option{background:var(--bg-2)}
+.field-hint{font-size:0.72rem;color:var(--text-3);font-family:var(--font-mono)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.stream-empty{padding:3rem 1.5rem;text-align:center;color:var(--text-3);font-size:0.85rem;font-family:var(--font-mono);letter-spacing:0.03em}
+.stream-row{border-bottom:1px solid var(--border);padding:1rem 1.25rem;display:grid;grid-template-columns:1fr auto;gap:0.75rem;align-items:start;transition:background 0.1s ease}
+.stream-row:last-child{border-bottom:none}.stream-row:hover{background:var(--bg-2)}
+.stream-label{font-size:0.88rem;font-weight:500;color:var(--text-0);margin-bottom:0.25rem}
+.stream-meta{font-size:0.75rem;font-family:var(--font-mono);color:var(--text-2);display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-bottom:0.5rem}
+.stream-meta span{white-space:nowrap}
+.stream-status{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.04em;padding:0.15rem 0.5rem;border-radius:3px}
+.stream-status.active{color:var(--green);background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2)}
+.stream-status.paused{color:var(--amber);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2)}
+.stream-status.inactive{color:var(--text-3);background:var(--bg-3);border:1px solid var(--border)}
+.stream-actions{display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end}
+.stream-amount{font-family:var(--font-mono);font-size:0.9rem;font-weight:500;color:var(--text-0);text-align:right}
+.progress-bar{width:100%;height:2px;background:var(--bg-3);border-radius:1px;overflow:hidden;margin-top:0.5rem}
+.progress-fill{height:100%;background:var(--accent);border-radius:1px;transition:width 0.3s ease}
+#toast-area{position:fixed;bottom:1.5rem;right:1.5rem;left:1.5rem;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;pointer-events:none}
+.toast{display:flex;align-items:flex-start;gap:0.6rem;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius);padding:0.75rem 1rem;font-size:0.82rem;color:var(--text-1);max-width:340px;width:100%;pointer-events:all;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:toast-in 0.2s ease forwards}
+.toast.error{border-color:rgba(239,68,68,0.3)}.toast.success{border-color:rgba(34,197,94,0.3)}
+.toast-dot{width:6px;height:6px;border-radius:50%;margin-top:0.3rem;flex-shrink:0;background:var(--text-2)}
+.toast.success .toast-dot{background:var(--green)}.toast.error .toast-dot{background:var(--red)}
+@keyframes toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.65);align-items:flex-end;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg-1);border:1px solid var(--border-2);border-radius:10px;width:100%;max-width:480px;overflow:hidden;animation:modal-in 0.2s ease forwards}
+@keyframes modal-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:0.9rem;font-weight:600;color:var(--text-0)}
+.modal-close{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:1.1rem;padding:0.25rem;line-height:1;-webkit-tap-highlight-color:transparent}
+.modal-body{padding:1.25rem}
+.modal-footer{padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:0.5rem}
+.addr{font-family:var(--font-mono);font-size:0.78rem;color:var(--text-2);word-break:break-all}
+.divider{height:1px;background:var(--border);margin:1.25rem 0}
+.section-title{font-size:0.7rem;font-family:var(--font-mono);color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem}
+.incoming-row{border-bottom:1px solid var(--border);padding:1rem 1.25rem}
+.incoming-row:last-child{border-bottom:none}
+@media(max-width:600px){.stats-bar{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}.stream-row{grid-template-columns:1fr}.stream-actions{flex-direction:row;align-items:center}.connect-title{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="5" width="12" height="2" rx="1" fill="white"/>
+        <rect x="1" y="8.5" width="8" height="2" rx="1" fill="white"/>
+        <rect x="1" y="1.5" width="5" height="2" rx="1" fill="white"/>
+      </svg>
+    </div>
+    <span class="logo-name">FlowPay</span>
+    <span class="logo-tag">Arc Testnet</span>
+  </div>
+  <div class="header-right">
+    <span class="network-badge">ARC · 5042002</span>
+    <button class="btn btn-secondary btn-sm" id="connect-btn" onclick="connectWallet()">Connect Wallet</button>
+    <button class="btn btn-ghost btn-sm" id="wallet-btn" onclick="showWalletModal()" style="display:none"><span id="wallet-addr-short"></span></button>
+  </div>
+</header>
+<main>
+  <div id="connect-wall">
+    <div class="connect-title">Recurring payments,<br/>on-chain.</div>
+    <div class="connect-sub">Deposit USDC into a smart contract. Set a schedule. Payments run automatically — hourly, daily, weekly, or monthly. Powered by <span>Arc Testnet</span>.</div>
+    <button class="btn btn-primary" style="padding:0.75rem 2rem;font-size:0.95rem" onclick="connectWallet()">Connect Wallet</button>
+  </div>
+  <div id="app-view">
+    <div class="stats-bar">
+      <div class="stat-cell"><div class="stat-label">USDC Balance</div><div class="stat-value accent" id="stat-usdc">—</div></div>
+      <div class="stat-cell"><div class="stat-label">Active Streams</div><div class="stat-value" id="stat-streams">—</div></div>
+      <div class="stat-cell"><div class="stat-label">Total Flowing / mo</div><div class="stat-value" id="stat-flow">—</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('outgoing',this)">Outgoing</button>
+      <button class="tab" onclick="switchTab('incoming',this)">Incoming</button>
+      <button class="tab" onclick="switchTab('new',this)">New Stream</button>
+    </div>
+    <div id="tab-outgoing">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Your Payment Streams</span><button class="btn btn-secondary btn-sm" onclick="loadStreams()">Refresh</button></div>
+        <div id="streams-list"><div class="stream-empty">Loading streams...</div></div>
+      </div>
+    </div>
+    <div id="tab-incoming" style="display:none">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Incoming Payments</span><button class="btn btn-secondary btn-sm" onclick="loadIncoming()">Refresh</button></div>
+        <div id="incoming-list"><div class="stream-empty">No incoming streams found.</div></div>
+      </div>
+    </div>
+    <div id="tab-new" style="display:none">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Create Stream</span></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field"><label class="field-label" for="f-label">Stream Label</label><input class="field-input" id="f-label" type="text" placeholder="e.g. Monthly Salary, Rent, Contractor" maxlength="40"/></div>
+            <div class="field"><label class="field-label" for="f-recipient">Recipient Address</label><input class="field-input" id="f-recipient" type="text" placeholder="0x..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"/></div>
+            <div class="two-col">
+              <div class="field"><label class="field-label" for="f-amount">Amount per Payment</label><input class="field-input" id="f-amount" type="number" placeholder="100" min="0.01" step="any"/><span class="field-hint">USDC</span></div>
+              <div class="field"><label class="field-label" for="f-interval">Frequency</label><select class="field-select" id="f-interval"><option value="0">Hourly</option><option value="1" selected>Daily</option><option value="2">Weekly</option><option value="3">Monthly</option></select></div>
+            </div>
+            <div class="field"><label class="field-label" for="f-deposit">Initial Deposit</label><input class="field-input" id="f-deposit" type="number" placeholder="500" min="0.01" step="any"/><span class="field-hint">Must be >= one payment amount. Remaining balance is refundable.</span></div>
+            <div class="divider" style="margin:0"></div>
+            <div id="stream-preview" style="display:none">
+              <div class="section-title">Stream Summary</div>
+              <div style="background:var(--bg-0);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-family:var(--font-mono);font-size:0.78rem;color:var(--text-1);display:flex;flex-direction:column;gap:0.4rem">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-3)">Recipient</span><span id="prev-recipient" class="addr" style="font-size:0.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-3)">Payment</span><span id="prev-amount"></span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-3)">Frequency</span><span id="prev-freq"></span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-3)">Deposit</span><span id="prev-deposit"></span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-3)">Payments covered</span><span id="prev-payments"></span></div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full" id="create-btn" onclick="previewOrCreate()" style="margin-top:0.25rem">Preview Stream</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<div class="modal-overlay" id="topup-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Top Up Stream</span><button class="modal-close" onclick="closeModal('topup-modal')">&#x2715;</button></div>
+    <div class="modal-body">
+      <div class="field"><label class="field-label" for="topup-amount">Amount (USDC)</label><input class="field-input" id="topup-amount" type="number" placeholder="100" min="0.01" step="any"/></div>
+      <div style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-2);font-family:var(--font-mono)">Stream ID: <span id="topup-stream-id" style="color:var(--text-1)"></span></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" style="flex:1" onclick="closeModal('topup-modal')">Cancel</button><button class="btn btn-primary" style="flex:1" onclick="confirmTopUp()">Top Up</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="wallet-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Wallet</span><button class="modal-close" onclick="closeModal('wallet-modal')">&#x2715;</button></div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <div><div class="field-label" style="margin-bottom:0.35rem">Address</div><div class="addr" id="wallet-full-addr"></div></div>
+        <div><div class="field-label" style="margin-bottom:0.35rem">USDC Balance</div><div style="font-family:var(--font-mono);font-size:1rem;color:var(--accent)" id="wallet-usdc-balance">—</div></div>
+        <div><div class="field-label" style="margin-bottom:0.35rem">Network</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-1)">Arc Testnet · Chain 5042002</div></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-full" onclick="disconnect()">Disconnect</button></div>
+  </div>
+</div>
+<div id="toast-area"></div>
+<script>
+const ARC_CHAIN_ID=5042002;
+const ARC_RPC="https://arc-testnet.drpc.org";
+const FLOWPAY_ADDR="0xbae847c54A5D77C028F194E0D77231fb8e698312";
+const USDC_ADDR="0x3600000000000000000000000000000000000000";
+const INTERVALS=["Hourly","Daily","Weekly","Monthly"];
+const INTERVAL_SECONDS=[3600,86400,604800,2592000];
+const FLOWPAY_ABI=["function createStream(address recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label) returns (uint256)","function executePayment(uint256 streamId)","function topUp(uint256 streamId,uint256 amount)","function cancelStream(uint256 streamId)","function getStream(uint256 streamId) view returns (tuple(uint256 id,address sender,address recipient,uint256 amountPerInterval,uint8 interval,uint256 startTime,uint256 lastExecuted,uint256 totalDeposited,uint256 totalPaid,bool active,string label))","function getUserStreams(address user) view returns (uint256[])","function streamBalance(uint256 streamId) view returns (uint256)","function nextDueTime(uint256 streamId) view returns (uint256)","event StreamCreated(uint256 indexed streamId,address indexed sender,address indexed recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label)"];
+const ERC20_ABI=["function balanceOf(address) view returns (uint256)","function allowance(address owner,address spender) view returns (uint256)","function approve(address spender,uint256 amount) returns (bool)"];
+let provider,signer,address,flowpay,usdc,topupStreamId,createStep="preview";
+async function connectWallet(){
+  if(!window.ethereum){toast("No wallet detected.","error");return}
+  try{
+    await window.ethereum.request({method:"eth_requestAccounts"});
+    const chainHex=await window.ethereum.request({method:"eth_chainId"});
+    if(parseInt(chainHex,16)!==ARC_CHAIN_ID){
+      try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x"+ARC_CHAIN_ID.toString(16)}]})}
+      catch(e){if(e.code===4902){await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:"0x"+ARC_CHAIN_ID.toString(16),chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:6},rpcUrls:[ARC_RPC],blockExplorerUrls:["https://testnet.arcscan.app"]}]})}else{toast("Switch to Arc Testnet manually.","error");return}}
+    }
+    provider=new ethers.BrowserProvider(window.ethereum);
+    signer=await provider.getSigner();
+    address=await signer.getAddress();
+    flowpay=new ethers.Contract(FLOWPAY_ADDR,FLOWPAY_ABI,signer);
+    usdc=new ethers.Contract(USDC_ADDR,ERC20_ABI,signer);
+    onConnected();
+  }catch(e){toast(e.message||"Connection failed","error")}
+}
+function onConnected(){
+  document.getElementById("connect-wall").style.display="none";
+  document.getElementById("app-view").style.display="block";
+  document.getElementById("connect-btn").style.display="none";
+  document.getElementById("wallet-btn").style.display="flex";
+  document.getElementById("wallet-addr-short").textContent=address.slice(0,6)+"..."+address.slice(-4);
+  document.getElementById("wallet-full-addr").textContent=address;
+  loadAll();
+  window.ethereum.on("accountsChanged",()=>location.reload());
+  window.ethereum.on("chainChanged",()=>location.reload());
+}
+function disconnect(){closeModal("wallet-modal");location.reload()}
+function showWalletModal(){document.getElementById("wallet-usdc-balance").textContent=document.getElementById("stat-usdc").textContent;openModal("wallet-modal")}
+async function loadAll(){await Promise.all([loadBalance(),loadStreams()])}
+async function loadBalance(){
+  try{const bal=await usdc.balanceOf(address);const fmt=formatUsdc(bal);document.getElementById("stat-usdc").textContent=fmt+" USDC";document.getElementById("wallet-usdc-balance").textContent=fmt+" USDC"}catch(e){}
+}
+async function loadStreams(){
+  const list=document.getElementById("streams-list");
+  list.innerHTML='<div class="stream-empty">Loading...</div>';
+  try{
+    const ids=await flowpay.getUserStreams(address);
+    if(!ids.length){list.innerHTML='<div class="stream-empty">No streams yet. Create one in the New Stream tab.</div>';updateStats([]);return}
+    const fetched=await Promise.all(ids.map(id=>flowpay.getStream(id)));
+    const balances=await Promise.all(ids.map(id=>flowpay.streamBalance(id).catch(()=>0n)));
+    const dueMap={};
+    for(let i=0;i<ids.length;i++){try{dueMap[ids[i]]=await flowpay.nextDueTime(ids[i])}catch(e){}}
+    const streamData=fetched.map((s,i)=>({...s,balance:balances[i],due:dueMap[ids[i]]}));
+    renderStreams(streamData);updateStats(streamData);
+  }catch(e){list.innerHTML='<div class="stream-empty">Error loading streams.</div>'}
+}
+async function loadIncoming(){
+  const list=document.getElementById("incoming-list");
+  list.innerHTML='<div class="stream-empty">Scanning...</div>';
+  try{
+    const filter=flowpay.filters.StreamCreated(null,null,address);
+    const events=await flowpay.queryFilter(filter,-100000);
+    if(!events.length){list.innerHTML='<div class="stream-empty">No incoming streams found.</div>';return}
+    const fetched=await Promise.all(events.map(e=>flowpay.getStream(e.args.streamId)));
+    list.innerHTML=fetched.map(s=>{
+      const amt=formatUsdc(s.amountPerInterval);const interval=INTERVALS[s.interval]||"Unknown";const status=s.active?"active":"inactive";
+      return`<div class="incoming-row"><div class="stream-label">${escHtml(s.label)||"Untitled Stream"}</div><div class="stream-meta"><span>From: ${s.sender.slice(0,6)}...${s.sender.slice(-4)}</span><span>${amt} USDC / ${interval}</span></div><span class="stream-status ${status}">${status.toUpperCase()}</span>${s.active?`<div style="margin-top:0.6rem"><button class="btn btn-primary btn-sm" onclick="collect(${s.id})">Collect Payment</button></div>`:""}</div>`;
+    }).join("");
+  }catch(e){list.innerHTML='<div class="stream-empty">Error loading incoming streams.</div>'}
+}
+function renderStreams(streams){
+  const list=document.getElementById("streams-list");
+  if(!streams.length){list.innerHTML='<div class="stream-empty">No streams yet. Create one in the New Stream tab.</div>';return}
+  list.innerHTML=streams.map(s=>{
+    const amt=formatUsdc(s.amountPerInterval);const bal=formatUsdc(s.balance);const paid=formatUsdc(s.totalPaid);
+    const interval=INTERVALS[s.interval]||"Unknown";const now=Math.floor(Date.now()/1000);
+    const isDue=s.due&&BigInt(now)>=s.due;
+    const progPct=s.totalDeposited>0n?Math.min(100,Number(s.totalPaid*100n/s.totalDeposited)):0;
+    let statusClass="inactive",statusText="Cancelled";
+    if(s.active){statusClass="active";statusText="Active"}else if(s.balance>0n){statusClass="paused";statusText="Low Balance"}
+    return`<div class="stream-row"><div><div class="stream-label">${escHtml(s.label)||"Untitled Stream"}</div><div class="stream-meta"><span>To: ${s.recipient.slice(0,6)}...${s.recipient.slice(-4)}</span><span>${amt} USDC · ${interval}</span><span>Balance: ${bal} USDC</span><span>Paid: ${paid} USDC</span></div><span class="stream-status ${statusClass}">${statusText}</span><div class="progress-bar"><div class="progress-fill" style="width:${progPct}%"></div></div></div><div class="stream-actions"><div class="stream-amount">${amt} USDC<br/><span style="font-size:0.7rem;color:var(--text-3)">/ ${interval.toLowerCase()}</span></div>${isDue&&s.active?`<button class="btn btn-primary btn-sm" onclick="collect(${s.id})">Collect</button>`:""}<button class="btn btn-secondary btn-sm" onclick="openTopUp(${s.id})">Top Up</button>${s.active?`<button class="btn btn-danger btn-sm" onclick="cancel(${s.id})">Cancel</button>`:""}</div></div>`;
+  }).join("");
+}
+function updateStats(streams){
+  const active=streams.filter(s=>s.active).length;
+  document.getElementById("stat-streams").textContent=active;
+  const monthlyTotal=streams.filter(s=>s.active).reduce((sum,s)=>{const secs=INTERVAL_SECONDS[s.interval]||INTERVAL_SECONDS[3];return sum+(Number(s.amountPerInterval)/1e6)*(2592000/secs)},0);
+  document.getElementById("stat-flow").textContent=monthlyTotal.toFixed(2)+" USDC";
+}
+async function collect(streamId){
+  try{setLoading("Executing payment...");const tx=await flowpay.executePayment(streamId);await tx.wait();toast("Payment executed.","success");loadAll()}
+  catch(e){toast(getErr(e),"error")}finally{clearLoading()}
+}
+async function cancel(streamId){
+  if(!confirm("Cancel this stream? Remaining balance will be refunded."))return;
+  try{setLoading("Cancelling...");const tx=await flowpay.cancelStream(streamId);await tx.wait();toast("Stream cancelled. Balance refunded.","success");loadAll()}
+  catch(e){toast(getErr(e),"error")}finally{clearLoading()}
+}
+function openTopUp(streamId){topupStreamId=streamId;document.getElementById("topup-stream-id").textContent=streamId;document.getElementById("topup-amount").value="";openModal("topup-modal")}
+async function confirmTopUp(){
+  const amtStr=document.getElementById("topup-amount").value.trim();
+  if(!amtStr||isNaN(amtStr)||parseFloat(amtStr)<=0){toast("Enter a valid amount","error");return}
+  const amount=ethers.parseUnits(amtStr,6);closeModal("topup-modal");
+  try{
+    setLoading("Approving USDC...");const allowance=await usdc.allowance(address,FLOWPAY_ADDR);
+    if(allowance<amount){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256);await tx.wait()}
+    setLoading("Topping up...");const tx=await flowpay.topUp(topupStreamId,amount);await tx.wait();toast("Stream topped up.","success");loadAll();
+  }catch(e){toast(getErr(e),"error")}finally{clearLoading()}
+}
+function previewOrCreate(){if(createStep==="preview")showPreview();else doCreate()}
+function showPreview(){
+  const label=document.getElementById("f-label").value.trim();
+  const recipient=document.getElementById("f-recipient").value.trim();
+  const amtStr=document.getElementById("f-amount").value.trim();
+  const interval=parseInt(document.getElementById("f-interval").value);
+  const depStr=document.getElementById("f-deposit").value.trim();
+  if(!ethers.isAddress(recipient)){toast("Invalid recipient address","error");return}
+  if(!amtStr||isNaN(amtStr)||parseFloat(amtStr)<=0){toast("Enter a valid amount","error");return}
+  if(!depStr||isNaN(depStr)||parseFloat(depStr)<=0){toast("Enter a valid deposit","error");return}
+  if(parseFloat(depStr)<parseFloat(amtStr)){toast("Deposit must be >= one payment amount","error");return}
+  const payments=Math.floor(parseFloat(depStr)/parseFloat(amtStr));
+  document.getElementById("prev-recipient").textContent=recipient;
+  document.getElementById("prev-amount").textContent=parseFloat(amtStr).toFixed(2)+" USDC";
+  document.getElementById("prev-freq").textContent=INTERVALS[interval];
+  document.getElementById("prev-deposit").textContent=parseFloat(depStr).toFixed(2)+" USDC";
+  document.getElementById("prev-payments").textContent=payments+" payments";
+  document.getElementById("stream-preview").style.display="block";
+  const btn=document.getElementById("create-btn");btn.textContent="Confirm & Create Stream";btn.style.background="var(--green)";btn.style.borderColor="var(--green)";
+  createStep="confirm";
+}
+async function doCreate(){
+  const label=document.getElementById("f-label").value.trim();
+  const recipient=document.getElementById("f-recipient").value.trim();
+  const amtStr=document.getElementById("f-amount").value.trim();
+  const interval=parseInt(document.getElementById("f-interval").value);
+  const depStr=document.getElementById("f-deposit").value.trim();
+  const amount=ethers.parseUnits(amtStr,6);const deposit=ethers.parseUnits(depStr,6);
+  try{
+    setLoading("Approving USDC...");const allowance=await usdc.allowance(address,FLOWPAY_ADDR);
+    if(allowance<deposit){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256);await tx.wait()}
+    setLoading("Creating stream...");const tx=await flowpay.createStream(recipient,amount,interval,deposit,label||"Payment Stream");await tx.wait();
+    toast("Stream created.","success");
+    ["f-label","f-recipient","f-amount","f-deposit"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("f-interval").value="1";document.getElementById("stream-preview").style.display="none";
+    const btn=document.getElementById("create-btn");btn.textContent="Preview Stream";btn.style.background="";btn.style.borderColor="";createStep="preview";
+    switchTab("outgoing",document.querySelectorAll(".tab")[0]);loadAll();
+  }catch(e){toast(getErr(e),"error")}finally{clearLoading()}
+}
+["f-label","f-recipient","f-amount","f-deposit","f-interval"].forEach(id=>{
+  document.getElementById(id)?.addEventListener("input",()=>{
+    if(createStep==="confirm"){createStep="preview";const btn=document.getElementById("create-btn");btn.textContent="Preview Stream";btn.style.background="";btn.style.borderColor="";document.getElementById("stream-preview").style.display="none"}
+  })
+});
+function switchTab(name,el){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");
+  ["outgoing","incoming","new"].forEach(t=>document.getElementById("tab-"+t).style.display=t===name?"block":"none");
+  if(name==="incoming")loadIncoming();
+}
+function openModal(id){document.getElementById(id).classList.add("open")}
+function closeModal(id){document.getElementById(id).classList.remove("open")}
+let loadingToast;
+function setLoading(msg){loadingToast=toast(msg,"info",0)}
+function clearLoading(){loadingToast?.remove?.()}
+function toast(msg,type="info",duration=4000){
+  const area=document.getElementById("toast-area");const el=document.createElement("div");
+  el.className=`toast ${type}`;el.innerHTML=`<div class="toast-dot"></div><span>${escHtml(msg)}</span>`;
+  area.appendChild(el);if(duration>0)setTimeout(()=>el.remove(),duration);return el;
+}
+function formatUsdc(raw){if(typeof raw==="bigint")return(Number(raw)/1e6).toFixed(2);return"0.00"}
+function escHtml(str){if(!str)return"";return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function getErr(e){if(e?.reason)return e.reason;if(e?.message){const m=e.message;const match=m.match(/execution reverted: "?([^"]+)"?/);if(match)return match[1];if(m.length<120)return m;return m.slice(0,120)+"..."}return"Transaction failed"}
+document.querySelectorAll(".modal-overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open")}));
+</script>
+</body>
+</html>
