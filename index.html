@@ -270,7 +270,7 @@ async function loadIncoming(){
   list.innerHTML='<div class="stream-empty">Scanning...</div>';
   try{
     const filter=flowpay.filters.StreamCreated(null,null,address);
-    const events=await flowpay.queryFilter(filter,-100000);
+    const events=await flowpay.queryFilter(filter,-9000);
     if(!events.length){list.innerHTML='<div class="stream-empty">No incoming streams found.</div>';return}
     const fetched=await Promise.all(events.map(e=>flowpay.getStream(e.args.streamId)));
     list.innerHTML=fetched.map(s=>{
