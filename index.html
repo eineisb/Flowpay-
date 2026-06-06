@@ -133,7 +133,7 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
     <div class="stats-bar">
       <div class="stat-cell"><div class="stat-label">USDC Balance</div><div class="stat-value accent" id="stat-usdc">—</div></div>
       <div class="stat-cell"><div class="stat-label">Active Streams</div><div class="stat-value" id="stat-streams">—</div></div>
-      <div class="stat-cell"><div class="stat-label">Total Flowing / mo</div><div class="stat-value" id="stat-flow">—</div></div>
+      <div class="stat-cell"><div class="stat-label">Total Flowing / day</div><div class="stat-value" id="stat-flow">—</div></div>
     </div>
     <div class="tabs">
       <button class="tab active" onclick="switchTab('outgoing',this)">Outgoing</button>
@@ -295,7 +295,7 @@ function renderStreams(streams){
 function updateStats(streams){
   const active=streams.filter(s=>s.active).length;
   document.getElementById("stat-streams").textContent=active;
-  const monthlyTotal=streams.filter(s=>s.active).reduce((sum,s)=>{const secs=INTERVAL_SECONDS[s.interval]||INTERVAL_SECONDS[3];return sum+(Number(s.amountPerInterval)/1e6)*(2592000/secs)},0);
+  const monthlyTotal=streams.filter(s=>s.active).reduce((sum,s)=>{const secs=INTERVAL_SECONDS[s.interval]||INTERVAL_SECONDS[3];return sum+(Number(s.amountPerInterval)/1e6)*(86400/secs)},0);
   document.getElementById("stat-flow").textContent=monthlyTotal.toFixed(2)+" USDC";
 }
 async function collect(streamId){
