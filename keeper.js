@@ -74,11 +74,6 @@ async function checkAndExecute() {
 
     for (const id of ids) {
       try {
-        // Check balance first
-        const balData = await call(iface.encodeFunctionData("streamBalance", [id]));
-        const [bal] = iface.decodeFunctionResult("streamBalance", balData);
-        if (Number(bal) === 0) { inactive++; continue; }
-
         const checkerData = await call(iface.encodeFunctionData("checker", [id]));
         const [canExec] = iface.decodeFunctionResult("checker", checkerData);
 
@@ -99,10 +94,10 @@ async function checkAndExecute() {
       }
     }
 
-    if (executed === 0 && pending === 0 && inactive > 0) {
-      console.log(`[${time}] All streams empty. Top up to resume.`);
-    } else if (executed > 0) {
+    if (executed > 0) {
       console.log(`[${time}] Executed ${executed} payment(s).`);
+    } else if (pending === 0) {
+      console.log(`[${time}] All streams empty. Top up to resume.`);
     }
 
   } catch(e) {
