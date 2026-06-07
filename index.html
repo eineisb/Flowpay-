@@ -9,6 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<script type="module">
+import { createWeb3Modal, defaultConfig } from "https://esm.sh/@web3modal/ethers5@4.1.9";
+window.Web3Modal = { create: (config) => createWeb3Modal({ ethersConfig: defaultConfig({ metadata: { name: "FlowPay", description: "Recurring USDC Payments", url: "https://eineisb.github.io/Flowpay-", icons: [] } }), ...config }) };
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
