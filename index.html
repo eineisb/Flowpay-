@@ -266,18 +266,21 @@ async function loadStreams(){
   }catch(e){list.innerHTML='<div class="stream-empty">Error loading streams.</div>'}
 }
 async function loadIncoming(){
-  const list=document.getElementById("incoming-list");
+  const list=document.getElementById('incoming-list');
   list.innerHTML='<div class="stream-empty">Scanning...</div>';
   try{
-    const filter=flowpay.filters.StreamCreated(null,null,address);
-    const events=await flowpay.queryFilter(filter,-9000);
-    if(!events.length){list.innerHTML='<div class="stream-empty">No incoming streams found.</div>';return}
-    const fetched=await Promise.all(events.map(e=>flowpay.getStream(e.args.streamId)));
-    list.innerHTML=fetched.map(s=>{
-      const amt=formatUsdc(s.amountPerInterval);const interval=INTERVALS[s.interval]||"Unknown";const status=s.active?"active":"inactive";
-      return`<div class="incoming-row"><div class="stream-label">${escHtml(s.label)||"Untitled Stream"}</div><div class="stream-meta"><span>From: ${s.sender.slice(0,6)}...${s.sender.slice(-4)}</span><span>${amt} USDC / ${interval}</span></div><span class="stream-status ${status}">${status.toUpperCase()}</span>${s.active?`<div style="margin-top:0.6rem"><button class="btn btn-primary btn-sm" onclick="collect(${s.id})">Collect Payment</button></div>`:""}</div>`;
-    }).join("");
-  }catch(e){list.innerHTML='<div class="stream-empty">Error loading incoming streams.</div>'}
+    const ids=Array.from({length:50},(_,i)=>i+1);
+    const results=await Promise.allSettled(ids.map(id=>flowpay.getStream(id)));
+    const incoming=results
+      .filter(r=>r.status==='fulfilled'&&Number(r.value.id)>0&&r.value.recipient.toLowerCase()===address.toLowerCase())
+      .map(r=>r.value);
+    list.innerHTML=incoming.map(s=>{
+      const amt=formatUsdc(s.amountPerInterval);
+      const interval=INTERVALS[Number(s.interval)]||'Unknown';
+      const status=s.active?'active':'inactive';
+      return '<div class="incoming-row"><div class="stream-label">'+escHtml(s.label)+'</div><div class="stream-meta"><span>From: '+s.sender.slice(0,6)+'...'+s.sender.slice(-4)+'</span><span>'+amt+' USDC / '+interval+'</span></div><span class="stream-status '+status+'">'+status.toUpperCase()+'</span>'+(s.active?'<div style="margin-top:0.6rem"><button class="btn btn-primary btn-sm" onclick="collect('+Number(s.id)+')">Collect Payment</button></div>':'')+'</div>';
+    }).join('');
+  }catch(e){list.innerHTML='<div class="stream-empty">Error: '+e.message+'</div>';}
 }
 function renderStreams(streams){
   const list=document.getElementById("streams-list");
@@ -467,18 +470,21 @@ async function loadStreams(){
   }catch(e){list.innerHTML='<div class="stream-empty">Error loading streams.</div>'}
 }
 async function loadIncoming(){
-  const list=document.getElementById("incoming-list");
+  const list=document.getElementById('incoming-list');
   list.innerHTML='<div class="stream-empty">Scanning...</div>';
   try{
-    const filter=flowpay.filters.StreamCreated(null,null,address);
-    const events=await flowpay.queryFilter(filter,-100000);
-    if(!events.length){list.innerHTML='<div class="stream-empty">No incoming streams found.</div>';return}
-    const fetched=await Promise.all(events.map(e=>flowpay.getStream(e.args.streamId)));
-    list.innerHTML=fetched.map(s=>{
-      const amt=formatUsdc(s.amountPerInterval);const interval=INTERVALS[s.interval]||"Unknown";const status=s.active?"active":"inactive";
-      return`<div class="incoming-row"><div class="stream-label">${escHtml(s.label)||"Untitled Stream"}</div><div class="stream-meta"><span>From: ${s.sender.slice(0,6)}...${s.sender.slice(-4)}</span><span>${amt} USDC / ${interval}</span></div><span class="stream-status ${status}">${status.toUpperCase()}</span>${s.active?`<div style="margin-top:0.6rem"><button class="btn btn-primary btn-sm" onclick="collect(${s.id})">Collect Payment</button></div>`:""}</div>`;
-    }).join("");
-  }catch(e){list.innerHTML='<div class="stream-empty">Error loading incoming streams.</div>'}
+    const ids=Array.from({length:50},(_,i)=>i+1);
+    const results=await Promise.allSettled(ids.map(id=>flowpay.getStream(id)));
+    const incoming=results
+      .filter(r=>r.status==='fulfilled'&&Number(r.value.id)>0&&r.value.recipient.toLowerCase()===address.toLowerCase())
+      .map(r=>r.value);
+    list.innerHTML=incoming.map(s=>{
+      const amt=formatUsdc(s.amountPerInterval);
+      const interval=INTERVALS[Number(s.interval)]||'Unknown';
+      const status=s.active?'active':'inactive';
+      return '<div class="incoming-row"><div class="stream-label">'+escHtml(s.label)+'</div><div class="stream-meta"><span>From: '+s.sender.slice(0,6)+'...'+s.sender.slice(-4)+'</span><span>'+amt+' USDC / '+interval+'</span></div><span class="stream-status '+status+'">'+status.toUpperCase()+'</span>'+(s.active?'<div style="margin-top:0.6rem"><button class="btn btn-primary btn-sm" onclick="collect('+Number(s.id)+')">Collect Payment</button></div>':'')+'</div>';
+    }).join('');
+  }catch(e){list.innerHTML='<div class="stream-empty">Error: '+e.message+'</div>';}
 }
 function renderStreams(streams){
   const list=document.getElementById("streams-list");
