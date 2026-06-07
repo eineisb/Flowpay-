@@ -285,7 +285,7 @@ async function loadIncoming(){
 function renderStreams(streams){
   const list=document.getElementById("streams-list");
   if(!streams.length){list.innerHTML='<div class="stream-empty">No streams yet. Create one in the New Stream tab.</div>';return}
-  list.innerHTML=streams.map(s=>{
+  list.innerHTML=[...streams].sort((a,b)=>b.active-a.active||Number(b.startTime)-Number(a.startTime)).map(s=>{
     const amt=formatUsdc(s.amountPerInterval);const bal=formatUsdc(s.balance);const paid=formatUsdc(s.totalPaid);
     const interval=INTERVALS[s.interval]||"Unknown";const now=Math.floor(Date.now()/1000);
     const isDue=s.due&&BigInt(now)>=BigInt(s.due.toString());
