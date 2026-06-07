@@ -8,7 +8,8 @@ const RPCS = [
 const CHAIN_ID     = 5042002;
 const FLOWPAY_ADDR = "0xC839285AC88A2446B6D22172870cb36c592bCE94";
 const PRIVATE_KEY  = process.env.PRIVATE_KEY;
-const CHECK_EVERY  = 3 * 60 * 1000;
+const CHECK_EVERY  = 1 * 60 * 1000;
+const ONCE         = process.argv.includes("--once");
 
 if (!PRIVATE_KEY) { console.error("ERROR: Set PRIVATE_KEY"); process.exit(1); }
 
@@ -18,13 +19,14 @@ const iface = new ethers.Interface([
   "function getUserStreams(address) view returns (uint256[])",
   "function checker(uint256) view returns (bool canExec, bytes execPayload)",
   "function executePayment(uint256)",
-  "function nextDueTime(uint256) view returns (uint256)"
+  "function nextDueTime(uint256) view returns (uint256)",
+  "function streamBalance(uint256) view returns (uint256)"
 ]);
 
-async function rpc(method, params, rpcIndex = 0) {
-  if (rpcIndex >= RPCS.length) throw new Error("All RPCs failed");
+async function rpc(method, params, idx = 0) {
+  if (idx >= RPCS.length) throw new Error("All RPCs failed");
   try {
-    const res = await fetch(RPCS[rpcIndex], {
+    const res = await fetch(RPCS[idx], {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
@@ -34,8 +36,7 @@ async function rpc(method, params, rpcIndex = 0) {
     if (json.error) throw new Error(json.error.message);
     return json.result;
   } catch(e) {
-    console.warn(`  RPC ${RPCS[rpcIndex]} failed: ${e.message} — trying next...`);
-    return rpc(method, params, rpcIndex + 1);
+    return rpc(method, params, idx + 1);
   }
 }
 
@@ -48,60 +49,69 @@ async function sendTx(data) {
     rpc("eth_getTransactionCount", [wallet.address, "latest"]),
     rpc("eth_gasPrice", [])
   ]);
-  const tx = {
-    to: FLOWPAY_ADDR,
-    data,
-    nonce,
-    gasPrice,
+  const signed = await wallet.signTransaction({
+    to: FLOWPAY_ADDR, data, nonce, gasPrice,
     gasLimit: "0x493E0",
     chainId: "0x" + CHAIN_ID.toString(16)
-  };
-  const signed = await wallet.signTransaction(tx);
+  });
   return rpc("eth_sendRawTransaction", [signed]);
 }
 
 async function checkAndExecute() {
   const now = Math.floor(Date.now() / 1000);
-  console.log(`\n[${new Date().toLocaleTimeString()}] Checking streams...`);
+  const time = new Date().toLocaleTimeString();
+
   try {
     const streamsData = await call(iface.encodeFunctionData("getUserStreams", [wallet.address]));
     const ids = iface.decodeFunctionResult("getUserStreams", streamsData)[0];
-    if (!ids.length) { console.log("  No streams found."); return; }
+
+    if (!ids.length) {
+      console.log(`[${time}] No streams found.`);
+      return;
+    }
+
+    let executed = 0, pending = 0, inactive = 0;
 
     for (const id of ids) {
       try {
+        // Check balance first
+        const balData = await call(iface.encodeFunctionData("streamBalance", [id]));
+        const [bal] = iface.decodeFunctionResult("streamBalance", balData);
+        if (Number(bal) === 0) { inactive++; continue; }
+
         const checkerData = await call(iface.encodeFunctionData("checker", [id]));
         const [canExec] = iface.decodeFunctionResult("checker", checkerData);
 
-        if (!canExec) {
+        if (canExec) {
+          console.log(`[${time}] Stream ${id}: executing payment...`);
+          const txHash = await sendTx(iface.encodeFunctionData("executePayment", [id]));
+          console.log(`[${time}] Stream ${id}: payment sent — ${txHash}`);
+          executed++;
+        } else {
           const dueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
           const [due] = iface.decodeFunctionResult("nextDueTime", dueData);
-          const secsLeft = Number(due) - now;
-          console.log(`  Stream ${id}: due in ${secsLeft > 0 ? Math.ceil(secsLeft/60)+"min" : "inactive/low balance"}`);
-          continue;
+          const mins = Math.ceil((Number(due) - now) / 60);
+          console.log(`[${time}] Stream ${id}: next payment in ${mins}min`);
+          pending++;
         }
-
-        console.log(`  Stream ${id}: DUE — executing...`);
-        const txHash = await sendTx(iface.encodeFunctionData("executePayment", [id]));
-        console.log(`  Stream ${id}: tx ${txHash}`);
-        console.log(`  Stream ${id}: payment sent`);
-
       } catch(e) {
-        console.error(`  Stream ${id}: ${e.message}`);
+        console.error(`[${time}] Stream ${id}: ${e.message}`);
       }
     }
+
+    if (executed === 0 && pending === 0 && inactive > 0) {
+      console.log(`[${time}] All streams empty. Top up to resume.`);
+    } else if (executed > 0) {
+      console.log(`[${time}] Executed ${executed} payment(s).`);
+    }
+
   } catch(e) {
-    console.error(`  Check failed: ${e.message}`);
+    console.error(`[${time}] Check failed: ${e.message}`);
   }
 }
 
-const ONCE = process.argv.includes("--once");
 async function loop() {
-  console.log("FlowPay Keeper started");
-  console.log("Wallet :", wallet.address);
-  console.log("RPCs   :", RPCS.join(", "));
-  console.log("Interval: every 3 minutes\n");
-
+  console.log("FlowPay Keeper started — wallet:", wallet.address);
   if (ONCE) { await checkAndExecute(); process.exit(0); }
   while (true) {
     await checkAndExecute();
@@ -109,7 +119,4 @@ async function loop() {
   }
 }
 
-loop().catch(e => {
-  console.error("Fatal:", e.message);
-  process.exit(1);
-});
+loop().catch(e => { console.error("Fatal:", e.message); process.exit(1); });
