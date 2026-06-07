@@ -2,7 +2,7 @@ name: FlowPay Keeper
 
 on:
   schedule:
-    - cron: '* * * * *'  # every minute
+    - cron: '*/5 * * * *'  # every minute
   workflow_dispatch:       # manual trigger
 
 jobs:
