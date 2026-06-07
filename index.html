@@ -273,7 +273,8 @@ async function loadIncoming(){
     const results=await Promise.allSettled(ids.map(id=>flowpay.getStream(id)));
     const incoming=results
       .filter(r=>r.status==='fulfilled'&&Number(r.value.id)>0&&r.value.recipient.toLowerCase()===address.toLowerCase())
-      .map(r=>r.value);
+      .map(r=>r.value)
+      .sort((a,b)=>b.active-a.active||Number(b.startTime)-Number(a.startTime));
     list.innerHTML=incoming.map(s=>{
       const amt=formatUsdc(s.amountPerInterval);
       const interval=INTERVALS[Number(s.interval)]||'Unknown';
