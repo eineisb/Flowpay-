@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowPay — Recurring Payments on Arc</title>
+<title>FlowPay - Recurring Payments on Arc</title>
 <meta name="description" content="Permissionless recurring USDC payments on Arc Testnet." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -127,14 +127,14 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
 <main>
   <div id="connect-wall">
     <div class="connect-title">Recurring payments,<br/>on-chain.</div>
-    <div class="connect-sub">Deposit USDC into a smart contract. Set a schedule. Payments run automatically — hourly, daily, weekly, or monthly. Powered by <span>Arc Testnet</span>.</div>
+    <div class="connect-sub">Deposit USDC into a smart contract. Set a schedule. Payments run automatically - hourly, daily, weekly, or monthly. Powered by <span>Arc Testnet</span>.</div>
     <button class="btn btn-primary" style="padding:0.75rem 2rem;font-size:0.95rem" onclick="connectWallet()">Connect Wallet</button>
   </div>
   <div id="app-view">
     <div class="stats-bar">
-      <div class="stat-cell"><div class="stat-label">USDC Balance</div><div class="stat-value accent" id="stat-usdc">—</div></div>
-      <div class="stat-cell"><div class="stat-label">Active Streams</div><div class="stat-value" id="stat-streams">—</div></div>
-      <div class="stat-cell"><div class="stat-label">Balance in Streams</div><div class="stat-value" id="stat-flow">—</div></div>
+      <div class="stat-cell"><div class="stat-label">USDC Balance</div><div class="stat-value accent" id="stat-usdc">-</div></div>
+      <div class="stat-cell"><div class="stat-label">Active Streams</div><div class="stat-value" id="stat-streams">-</div></div>
+      <div class="stat-cell"><div class="stat-label">Balance in Streams</div><div class="stat-value" id="stat-flow">-</div></div>
     </div>
     <div class="tabs">
       <button class="tab active" onclick="switchTab('outgoing',this)">Outgoing</button>
@@ -195,7 +195,7 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
       <div style="display:flex;flex-direction:column;gap:1.5rem;">
         <div style="text-align:center;padding:2rem 1rem;">
           <div style="font-size:1.1rem;font-weight:600;color:var(--text-0);margin-bottom:0.75rem;letter-spacing:-0.02em;">Automated Token Swaps</div>
-          <div style="font-size:0.85rem;color:var(--text-2);line-height:1.7;max-width:340px;margin:0 auto;">Set up recurring swaps between USDC, EURC, and cirBTC on a fixed schedule. Powered by Circle StableFX — institutional-grade FX settlement on Arc.</div>
+          <div style="font-size:0.85rem;color:var(--text-2);line-height:1.7;max-width:340px;margin:0 auto;">Set up recurring swaps between USDC, EURC, and cirBTC on a fixed schedule. Powered by Circle StableFX - institutional-grade FX settlement on Arc.</div>
         </div>
         <div style="background:var(--bg-0);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
           <div class="section-title">Supported Pairs</div>
@@ -237,7 +237,7 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
           </div>
         </div>
         <div style="background:rgba(79,142,247,0.05);border:1px solid rgba(79,142,247,0.15);border-radius:var(--radius);padding:1rem;font-size:0.78rem;color:var(--text-2);line-height:1.6;font-family:var(--font-mono);">
-          Powered by Circle StableFX — institutional-grade RFQ execution with atomic on-chain settlement on Arc. Access pending StableFX API availability.
+          Powered by Circle StableFX - institutional-grade RFQ execution with atomic on-chain settlement on Arc. Access pending StableFX API availability.
         </div>
       </div>
     </div>
@@ -259,7 +259,7 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
     <div class="modal-body">
       <div style="display:flex;flex-direction:column;gap:0.75rem">
         <div><div class="field-label" style="margin-bottom:0.35rem">Address</div><div class="addr" id="wallet-full-addr"></div></div>
-        <div><div class="field-label" style="margin-bottom:0.35rem">USDC Balance</div><div style="font-family:var(--font-mono);font-size:1rem;color:var(--accent)" id="wallet-usdc-balance">—</div></div>
+        <div><div class="field-label" style="margin-bottom:0.35rem">USDC Balance</div><div style="font-family:var(--font-mono);font-size:1rem;color:var(--accent)" id="wallet-usdc-balance">-</div></div>
         <div><div class="field-label" style="margin-bottom:0.35rem">Network</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-1)">Arc Testnet · Chain 5042002</div></div>
       </div>
     </div>
@@ -464,7 +464,7 @@ document.querySelectorAll(".modal-overlay").forEach(o=>o.addEventListener("click
     <div class="modal-body">
       <div style="display:flex;flex-direction:column;gap:0.75rem">
         <div><div class="field-label" style="margin-bottom:0.35rem">Address</div><div class="addr" id="wallet-full-addr"></div></div>
-        <div><div class="field-label" style="margin-bottom:0.35rem">USDC Balance</div><div style="font-family:var(--font-mono);font-size:1rem;color:var(--accent)" id="wallet-usdc-balance">—</div></div>
+        <div><div class="field-label" style="margin-bottom:0.35rem">USDC Balance</div><div style="font-family:var(--font-mono);font-size:1rem;color:var(--accent)" id="wallet-usdc-balance">-</div></div>
         <div><div class="field-label" style="margin-bottom:0.35rem">Network</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-1)">Arc Testnet · Chain 5042002</div></div>
       </div>
     </div>
