@@ -1,0 +1,5 @@
+node_modules/
+keeper.log
+keeper.pid
+flowpay-deployment.json
+.env
