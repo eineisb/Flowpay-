@@ -404,7 +404,8 @@ async function doCreate(){
   const depStr=document.getElementById("f-deposit").value.trim();
   const amount=ethers.parseUnits(amtStr,6);const deposit=ethers.parseUnits(depStr,6);
   const startTimeInput=document.getElementById("f-starttime").value;
-  const startTime=startTimeInput?Math.floor(new Date(startTimeInput).getTime()/1000):Math.floor(Date.now()/1000)+30;
+  const intervalSecs=[1800,3600,86400,604800,2592000][interval]||1800;
+const startTime=startTimeInput?Math.floor(new Date(startTimeInput).getTime()/1000):Math.floor(Date.now()/1000)+intervalSecs;
   try{
     setLoading("Approving USDC...");const allowance=await usdc.allowance(address,FLOWPAY_ADDR);
     if(allowance<deposit){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256);await tx.wait()}
