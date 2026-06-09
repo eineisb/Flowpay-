@@ -163,9 +163,10 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
             <div class="field"><label class="field-label" for="f-recipient">Recipient Address</label><input class="field-input" id="f-recipient" type="text" placeholder="0x..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"/></div>
             <div class="two-col">
               <div class="field"><label class="field-label" for="f-amount">Amount per Payment</label><input class="field-input" id="f-amount" type="number" placeholder="100" min="0.01" step="any"/><span class="field-hint">USDC</span></div>
-              <div class="field"><label class="field-label" for="f-interval">Frequency</label><select class="field-select" id="f-interval"><option value="0">30 Minutes</option><option value="1">Hourly</option><option value="2" selected>Daily</option><option value="3">Weekly</option><option value="4">Monthly</option></select></div>
+              <div class="field"><label class="field-label" for="f-interval">Frequency</label><select class="field-select" id="f-interval"><option value="0">30 Min (fires at 30-35 min)</option><option value="1">Hourly (fires at 60-65 min)</option><option value="2" selected>Daily (fires at 24h-24h5min)</option><option value="3">Weekly</option><option value="4">Monthly</option></select></div>
             </div>
-            <div class="field"><label class="field-label" for="f-deposit">Initial Deposit</label><input class="field-input" id="f-deposit" type="number" placeholder="500" min="0.01" step="any"/><span class="field-hint">Must be >= one payment amount. Remaining balance is refundable.</span></div>
+            <div class="field"><label class="field-label" for="f-deposit">Initial Deposit</label><input class="field-input" id="f-deposit" type="number" placeholder="500" min="0.01" step="any"/><span class="field-hint">Must be >= one payment amount. Remaining balance is refundable.</span>
+            <span class="field-hint" style="color:var(--text-2);margin-top:0.25rem;">Payments execute within a 5 minute window of the scheduled time via automated keeper.</span></div>
             <div class="field"><label class="field-label" for="f-starttime">Start Time</label><input class="field-input" id="f-starttime" type="datetime-local"/><span class="field-hint">Leave blank to start immediately</span></div>
             <div class="divider" style="margin:0"></div>
             <div id="stream-preview" style="display:none">
