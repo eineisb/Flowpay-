@@ -127,6 +127,14 @@ server.listen(PORT, () => {
   console.log(`Wallet: ${wallet.address}`);
 });
 
+// Self-ping to prevent Render spin-down
+setInterval(async () => {
+  try {
+    await fetch('https://flowpay-wks2.onrender.com');
+    console.log('Self-ping OK');
+  } catch(e) {}
+}, 10 * 60 * 1000);
+
 // Run keeper loop
 async function loop() {
   while (true) {
