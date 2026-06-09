@@ -87,7 +87,7 @@ async function checkAndExecute() {
           try {
             const streamData = await call(iface.encodeFunctionData("getStream", [id]));
             const [stream] = iface.decodeFunctionResult("getStream", streamData);
-              console.log(`[${time}] Stream ${id}: inactive - top up to resume`);
+            if (!stream.active) {
             } else {
               const dueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
               const [due] = iface.decodeFunctionResult("nextDueTime", dueData);
