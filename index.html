@@ -7,7 +7,7 @@
 <meta name="description" content="Permissionless recurring USDC payments on Arc Testnet." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
 <style>
@@ -145,7 +145,7 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
     <div id="tab-outgoing">
       <div class="card">
         <div class="card-header"><span class="card-title">Your Payment Streams</span><button class="btn btn-secondary btn-sm" onclick="loadStreams()">Refresh</button></div>
-        <div id="streams-list"><div class="stream-empty">Loading streams...</div></div>
+        <div id="streams-list"><div class="stream-empty" style="color:var(--text-3);">Loading...</div></div>
       </div>
     </div>
     <div id="tab-incoming" style="display:none">
@@ -310,10 +310,13 @@ async function loadStreams(){
   try{
     const ids=await flowpay.getUserStreams(address);
     if(!ids.length){list.innerHTML='<div class="stream-empty">No streams yet. Create one in the New Stream tab.</div>';updateStats([]);return}
-    const fetched=await Promise.all(ids.map(id=>flowpay.getStream(id)));
-    const balances=await Promise.all(ids.map(id=>flowpay.streamBalance(id).catch(()=>BigInt(0))));
+    const [fetched,balances,dueTimes]=await Promise.all([
+      Promise.all(ids.map(id=>flowpay.getStream(id))),
+      Promise.all(ids.map(id=>flowpay.streamBalance(id).catch(()=>BigInt(0)))),
+      Promise.all(ids.map(id=>flowpay.nextDueTime(id).catch(()=>0)))
+    ]);
     const dueMap={};
-    for(let i=0;i<ids.length;i++){try{dueMap[ids[i]]=await flowpay.nextDueTime(ids[i])}catch(e){}}
+    ids.forEach((id,i)=>{ dueMap[id]=dueTimes[i]; });
     const streamData=fetched.map((s,i)=>({id:s.id,sender:s.sender,recipient:s.recipient,amountPerInterval:s.amountPerInterval,interval:s.interval,startTime:s.startTime,lastExecuted:s.lastExecuted,totalDeposited:s.totalDeposited,totalPaid:s.totalPaid,active:s.active,label:s.label,createdAt:s.createdAt,balance:balances[i],due:dueMap[ids[i]]}));
     renderStreams(streamData);updateStats(streamData);
   }catch(e){list.innerHTML='<div class="stream-empty">Error loading streams.</div>'}
@@ -322,7 +325,7 @@ async function loadIncoming(){
   const list=document.getElementById('incoming-list');
   list.innerHTML='<div class="stream-empty">Scanning...</div>';
   try{
-    const ids=Array.from({length:50},(_,i)=>i+1);
+    const ids=Array.from({length:20},(_,i)=>i+1);
     const results=await Promise.allSettled(ids.map(id=>flowpay.getStream(id)));
     const incoming=results
       .filter(r=>r.status==='fulfilled'&&Number(r.value.id)>0&&r.value.recipient.toLowerCase()===address.toLowerCase())
@@ -427,7 +430,7 @@ async function showHistory(streamId){
   const body = document.getElementById('history-body');
   body.innerHTML = '<div class="stream-empty">Loading...</div>';
   try {
-    const provider2 = new ethers.JsonRpcProvider(ARC_RPC, ethers.Network.from(ARC_CHAIN_ID));
+    const provider2 = new ethers.JsonRpcProvider("https://5042002.rpc.thirdweb.com", ethers.Network.from(ARC_CHAIN_ID));
     const historyABI = ["event PaymentExecuted(uint256 indexed streamId,address indexed recipient,uint256 amount,uint256 timestamp)"];
 const contract2 = new ethers.Contract(FLOWPAY_ADDR, historyABI, provider2);
     const filter = contract2.filters.PaymentExecuted(streamId);
