@@ -65,43 +65,32 @@ async function checkAndExecute() {
   const now = Math.floor(Date.now() / 1000);
   const time = new Date().toLocaleTimeString();
   try {
-    const streamsData = await call(iface.encodeFunctionData("getUserStreams", [wallet.address]));
-    const ids = iface.decodeFunctionResult("getUserStreams", streamsData)[0];
-
-    if (!ids.length) {
-      lastResult = "No streams found";
-      console.log(`[${time}] No streams found`);
-      return;
-    }
-
-    let executed = 0;
-    for (const id of ids) {
+    let executed = 0, checked = 0, due = 0;
+    for (let id = 1; id <= 50; id++) {
       try {
+        const streamData = await call(iface.encodeFunctionData("getStream", [id]));
+        const [stream] = iface.decodeFunctionResult("getStream", streamData);
+        if (Number(stream.id) === 0) break;
+        checked++;
+        if (!stream.active) { console.log(`[${time}] Stream ${id} (${stream.label}): inactive`); continue; }
         const checkerData = await call(iface.encodeFunctionData("checker", [id]));
         const [canExec] = iface.decodeFunctionResult("checker", checkerData);
         if (canExec) {
-          console.log(`[${time}] Stream ${id}: executing...`);
+          console.log(`[${time}] Stream ${id} (${stream.label}): executing...`);
           const txHash = await sendTx(iface.encodeFunctionData("executePayment", [id]));
           console.log(`[${time}] Stream ${id}: tx ${txHash}`);
           executed++;
         } else {
-          const streamData = await call(iface.encodeFunctionData("getStream", [id]));
-          const [stream] = iface.decodeFunctionResult("getStream", streamData);
-          if (!stream.active) {
-            console.log(`[${time}] Stream ${id}: inactive`);
-          } else {
-            const dueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
-            const [due] = iface.decodeFunctionResult("nextDueTime", dueData);
-            const mins = Math.ceil((Number(due) - now) / 60);
-            console.log(`[${time}] Stream ${id}: due in ${mins}min`);
-          }
+          const nextDueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
+          const [nextDue] = iface.decodeFunctionResult("nextDueTime", nextDueData);
+          const mins = Math.ceil((Number(nextDue) - now) / 60);
+          console.log(`[${time}] Stream ${id} (${stream.label}): due in ${mins}min`);
+          due++;
         }
-      } catch(e) {
-        console.error(`[${time}] Stream ${id}: ${e.message}`);
-      }
+      } catch(e) { break; }
     }
-
-    lastResult = executed > 0 ? `Executed ${executed} payment(s)` : `${ids.length} stream(s) checked`;
+    if (checked === 0) { lastResult = "No streams found"; console.log(`[${time}] No streams found`); }
+    else { lastResult = executed > 0 ? `Executed ${executed} payment(s)` : `${checked} stream(s) checked, ${due} pending`; }
   } catch(e) {
     lastResult = `Error: ${e.message}`;
     console.error(`[${time}] Check failed: ${e.message}`);
