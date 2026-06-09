@@ -427,7 +427,7 @@ async function showHistory(streamId){
   const body = document.getElementById('history-body');
   body.innerHTML = '<div class="stream-empty">Loading...</div>';
   try {
-    const provider2 = new ethers.JsonRpcProvider(ARC_RPC,{chainId:ARC_CHAIN_ID,name:'arc-testnet'},{staticNetwork:true});
+    const provider2 = new ethers.JsonRpcProvider(ARC_RPC, ethers.Network.from(ARC_CHAIN_ID));
     const contract2 = new ethers.Contract(FLOWPAY_ADDR, FLOWPAY_ABI, provider2);
     const filter = contract2.filters.PaymentExecuted(streamId);
     const events = await contract2.queryFilter(filter, -9000);
