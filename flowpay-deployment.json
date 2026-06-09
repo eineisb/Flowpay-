@@ -1,5 +1,5 @@
 {
-  "address": "0xe5EAF959d19F2009e66e91a31D86BFdD3A8eafA2",
+  "address": "0x0Fd6e2e7Aff8363Cb57A60f5Cee17209C72EA156",
   "chainId": 5042002,
   "abi": [
     {
@@ -389,6 +389,11 @@
               "internalType": "string",
               "name": "label",
               "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
             }
           ],
           "internalType": "struct FlowPay.Stream",
@@ -539,6 +544,11 @@
           "internalType": "string",
           "name": "label",
           "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "createdAt",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -563,5 +573,5 @@
       "type": "function"
     }
   ],
-  "deployedAt": "2026-06-09T08:51:32.577Z"
+  "deployedAt": "2026-06-09T10:27:32.285Z"
 }

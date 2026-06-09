@@ -31,6 +31,7 @@ contract FlowPay {
         uint256 totalPaid;
         bool    active;
         string  label;
+        uint256 createdAt;
     }
 
     uint256 private _nextStreamId = 1;
@@ -87,7 +88,8 @@ contract FlowPay {
             totalDeposited: deposit,
             totalPaid: 0,
             active: true,
-            label: label
+            label: label,
+            createdAt: block.timestamp
         });
 
         _userStreams[msg.sender].push(streamId);
