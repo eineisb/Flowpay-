@@ -20,6 +20,7 @@ const iface = new ethers.Interface([
   "function checker(uint256) view returns (bool canExec, bytes execPayload)",
   "function executePayment(uint256)",
   "function nextDueTime(uint256) view returns (uint256)",
+  "function getStream(uint256) view returns (tuple(uint256 id,address sender,address recipient,uint256 amountPerInterval,uint8 interval,uint256 startTime,uint256 lastExecuted,uint256 totalDeposited,uint256 totalPaid,bool active,string label))",
   "function streamBalance(uint256) view returns (uint256)"
 ]);
 
@@ -83,11 +84,17 @@ async function checkAndExecute() {
           console.log(`[${time}] Stream ${id}: payment sent — ${txHash}`);
           executed++;
         } else {
-          const dueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
-          const [due] = iface.decodeFunctionResult("nextDueTime", dueData);
-          const mins = Math.ceil((Number(due) - now) / 60);
-          console.log(`[${time}] Stream ${id}: next payment in ${mins}min`);
-          pending++;
+          try {
+            const dueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
+            const [due] = iface.decodeFunctionResult("nextDueTime", dueData);
+            const mins = Math.ceil((Number(due) - now) / 60);
+            if (mins > 0) {
+              console.log(`[${time}] Stream ${id}: next payment in ${mins}min`);
+              pending++;
+            } else {
+              console.log(`[${time}] Stream ${id}: inactive or empty`);
+            }
+          } catch(e) {}
         }
       } catch(e) {
         console.error(`[${time}] Stream ${id}: ${e.message}`);
