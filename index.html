@@ -314,7 +314,7 @@ async function loadStreams(){
     const balances=await Promise.all(ids.map(id=>flowpay.streamBalance(id).catch(()=>BigInt(0))));
     const dueMap={};
     for(let i=0;i<ids.length;i++){try{dueMap[ids[i]]=await flowpay.nextDueTime(ids[i])}catch(e){}}
-    const streamData=fetched.map((s,i)=>({id:s.id,sender:s.sender,recipient:s.recipient,amountPerInterval:s.amountPerInterval,interval:s.interval,startTime:s.startTime,lastExecuted:s.lastExecuted,totalDeposited:s.totalDeposited,totalPaid:s.totalPaid,active:s.active,label:s.label,balance:balances[i],due:dueMap[ids[i]]}));
+    const streamData=fetched.map((s,i)=>({id:s.id,sender:s.sender,recipient:s.recipient,amountPerInterval:s.amountPerInterval,interval:s.interval,startTime:s.startTime,lastExecuted:s.lastExecuted,totalDeposited:s.totalDeposited,totalPaid:s.totalPaid,active:s.active,label:s.label,createdAt:s.createdAt,balance:balances[i],due:dueMap[ids[i]]}));
     renderStreams(streamData);updateStats(streamData);
   }catch(e){list.innerHTML='<div class="stream-empty">Error loading streams.</div>'}
 }
