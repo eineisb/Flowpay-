@@ -65,33 +65,80 @@ async function checkAndExecute() {
   const now = Math.floor(Date.now() / 1000);
   const time = new Date().toLocaleTimeString();
   try {
-    let executed = 0, checked = 0, due = 0;
-    for (let id = 1; id <= 50; id++) {
-      try {
-        const streamData = await call(iface.encodeFunctionData("getStream", [id]));
-        const [stream] = iface.decodeFunctionResult("getStream", streamData);
-        if (Number(stream.id) === 0) break;
-        checked++;
-        if (!stream.active) { console.log(`[${time}] Stream ${id} (${stream.label}): inactive`); continue; }
-        const checkerData = await call(iface.encodeFunctionData("checker", [id]));
-        const [canExec] = iface.decodeFunctionResult("checker", checkerData);
-        if (canExec) {
-          console.log(`[${time}] Stream ${id} (${stream.label}): executing...`);
-          const txHash = await sendTx(iface.encodeFunctionData("executePayment", [id]));
-          console.log(`[${time}] Stream ${id}: tx ${txHash}`);
-          executed++;
-        } else {
-          const nextDueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
-          const [nextDue] = iface.decodeFunctionResult("nextDueTime", nextDueData);
-          const mins = Math.ceil((Number(nextDue) - now) / 60);
-          console.log(`[${time}] Stream ${id} (${stream.label}): due in ${mins}min`);
-          due++;
-        }
-      } catch(e) { break; }
+    // Fetch all stream data in parallel
+    const ids = Array.from({length:50},(_,i)=>i+1);
+    const streamResults = await Promise.all(ids.map(id =>
+      call(iface.encodeFunctionData("getStream",[id])).then(d => {
+        const [s] = iface.decodeFunctionResult("getStream",d);
+        return s;
+      }).catch(()=>null)
+    ));
+
+    const streams = streamResults.filter(s => s && Number(s.id) > 0);
+
+    if(!streams.length){
+      lastResult = "No streams found";
+      console.log(`[${time}] No streams found`);
+      lastCheck = new Date().toISOString();
+      return;
     }
-    if (checked === 0) { lastResult = "No streams found"; console.log(`[${time}] No streams found`); }
-    else { lastResult = executed > 0 ? `Executed ${executed} payment(s)` : `${checked} stream(s) checked, ${due} pending`; }
-  } catch(e) {
+
+    const activeStreams = streams.filter(s => s.active);
+
+    if(!activeStreams.length){
+      streams.forEach(s => console.log(`[${time}] Stream ${s.id} (${s.label}): inactive`));
+      lastResult = `${streams.length} stream(s) checked - all inactive`;
+      lastCheck = new Date().toISOString();
+      return;
+    }
+
+    // Check all active streams in parallel
+    const checkerResults = await Promise.all(activeStreams.map(s =>
+      call(iface.encodeFunctionData("checker",[s.id])).then(d => {
+        const [canExec] = iface.decodeFunctionResult("checker",d);
+        return {stream: s, canExec};
+      }).catch(()=>({stream: s, canExec: false}))
+    ));
+
+    const dueStreams = checkerResults.filter(r => r.canExec);
+    const pendingStreams = checkerResults.filter(r => !r.canExec);
+
+    // Get next due times for pending streams in parallel
+    const dueTimes = await Promise.all(pendingStreams.map(r =>
+      call(iface.encodeFunctionData("nextDueTime",[r.stream.id])).then(d => {
+        const [due] = iface.decodeFunctionResult("nextDueTime",d);
+        return {stream: r.stream, mins: Math.ceil((Number(due)-now)/60)};
+      }).catch(()=>({stream: r.stream, mins: 0}))
+    ));
+
+    // Log inactive
+    streams.filter(s=>!s.active).forEach(s =>
+      console.log(`[${time}] Stream ${s.id} (${s.label}): inactive`)
+    );
+
+    // Log pending
+    dueTimes.forEach(({stream,mins}) =>
+      console.log(`[${time}] Stream ${stream.id} (${stream.label}): due in ${mins}min`)
+    );
+
+    // Execute due payments
+    let executed = 0;
+    for(const {stream} of dueStreams){
+      try{
+        console.log(`[${time}] Stream ${stream.id} (${stream.label}): executing...`);
+        const txHash = await sendTx(iface.encodeFunctionData("executePayment",[stream.id]));
+        console.log(`[${time}] Stream ${stream.id}: tx ${txHash}`);
+        executed++;
+      }catch(e){
+        console.error(`[${time}] Stream ${stream.id}: ${e.message}`);
+      }
+    }
+
+    lastResult = executed > 0
+      ? `Executed ${executed} payment(s)`
+      : `${streams.length} stream(s) checked, ${dueStreams.length} due, ${pendingStreams.length} pending`;
+
+  }catch(e){
     lastResult = `Error: ${e.message}`;
     console.error(`[${time}] Check failed: ${e.message}`);
   }
