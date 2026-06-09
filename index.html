@@ -166,6 +166,7 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
               <div class="field"><label class="field-label" for="f-interval">Frequency</label><select class="field-select" id="f-interval"><option value="0">30 Minutes</option><option value="1">Hourly</option><option value="2" selected>Daily</option><option value="3">Weekly</option><option value="4">Monthly</option></select></div>
             </div>
             <div class="field"><label class="field-label" for="f-deposit">Initial Deposit</label><input class="field-input" id="f-deposit" type="number" placeholder="500" min="0.01" step="any"/><span class="field-hint">Must be >= one payment amount. Remaining balance is refundable.</span></div>
+            <div class="field"><label class="field-label" for="f-starttime">Start Time</label><input class="field-input" id="f-starttime" type="datetime-local"/><span class="field-hint">Leave blank to start immediately</span></div>
             <div class="divider" style="margin:0"></div>
             <div id="stream-preview" style="display:none">
               <div class="section-title">Stream Summary</div>
@@ -249,15 +250,23 @@ main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:2rem 1.5rem 4rem}
     <div class="modal-footer"><button class="btn btn-secondary btn-full" onclick="disconnect()">Disconnect</button></div>
   </div>
 </div>
+<div class="modal-overlay" id="history-modal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Payment History</span><button class="modal-close" onclick="closeModal('history-modal')">&#x2715;</button></div>
+    <div class="modal-body" id="history-body" style="max-height:60vh;overflow-y:auto;">
+      <div class="stream-empty">Loading...</div>
+    </div>
+  </div>
+</div>
 <div id="toast-area"></div>
 <script>
 const ARC_CHAIN_ID=5042002;
 const ARC_RPC="https://arc-testnet.drpc.org";
-const FLOWPAY_ADDR="0xC839285AC88A2446B6D22172870cb36c592bCE94";
+const FLOWPAY_ADDR="0xe5EAF959d19F2009e66e91a31D86BFdD3A8eafA2";
 const USDC_ADDR="0x3600000000000000000000000000000000000000";
 const INTERVALS=["30 Min","Hourly","Daily","Weekly","Monthly"];
 const INTERVAL_SECONDS=[1800,3600,86400,604800,2592000];
-const FLOWPAY_ABI=["function createStream(address recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label) returns (uint256)","function executePayment(uint256 streamId)","function topUp(uint256 streamId,uint256 amount)","function cancelStream(uint256 streamId)","function getStream(uint256 streamId) view returns (tuple(uint256 id,address sender,address recipient,uint256 amountPerInterval,uint8 interval,uint256 startTime,uint256 lastExecuted,uint256 totalDeposited,uint256 totalPaid,bool active,string label))","function getUserStreams(address user) view returns (uint256[])","function streamBalance(uint256 streamId) view returns (uint256)","function nextDueTime(uint256 streamId) view returns (uint256)","event StreamCreated(uint256 indexed streamId,address indexed sender,address indexed recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label)"];
+const FLOWPAY_ABI=["function createStream(address recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label,uint256 startTime) returns (uint256)","function executePayment(uint256 streamId)","function topUp(uint256 streamId,uint256 amount)","function cancelStream(uint256 streamId)","function getStream(uint256 streamId) view returns (tuple(uint256 id,address sender,address recipient,uint256 amountPerInterval,uint8 interval,uint256 startTime,uint256 lastExecuted,uint256 totalDeposited,uint256 totalPaid,bool active,string label))","function getUserStreams(address user) view returns (uint256[])","function streamBalance(uint256 streamId) view returns (uint256)","function nextDueTime(uint256 streamId) view returns (uint256)","event StreamCreated(uint256 indexed streamId,address indexed sender,address indexed recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label,uint256 startTime)"];
 const ERC20_ABI=["function balanceOf(address) view returns (uint256)","function allowance(address owner,address spender) view returns (uint256)","function approve(address spender,uint256 amount) returns (bool)"];
 let provider,signer,address,flowpay,usdc,topupStreamId,createStep="preview";
 async function connectWallet(){
@@ -336,7 +345,7 @@ function renderStreams(streams){
     const progPct=s.totalDeposited?Math.min(100,Math.floor(Number(s.totalPaid)*100/Number(s.totalDeposited))):0;
     let statusClass="inactive",statusText="Cancelled";
     if(s.active){statusClass="active";statusText="Active"}else if(s.balance&&s.balance>0){statusClass="paused";statusText="Low Balance"}
-    return`<div class="stream-row"><div><div class="stream-label">${escHtml(s.label)||"Untitled Stream"}</div><div class="stream-meta"><span>To: ${s.recipient.slice(0,6)}...${s.recipient.slice(-4)}</span><span>${amt} USDC · ${interval}</span><span>Balance: ${bal} USDC</span><span>Paid: ${paid} USDC</span></div><span class="stream-status ${statusClass}">${statusText}</span><div class="progress-bar"><div class="progress-fill" style="width:${progPct}%"></div></div></div><div class="stream-actions"><div class="stream-amount">${amt} USDC<br/><span style="font-size:0.7rem;color:var(--text-3)">/ ${interval.toLowerCase()}</span></div>${isDue&&s.active&&Number(s.balance)>0?`<button class="btn btn-primary btn-sm" onclick="collect(${s.id})">Collect</button>`:""}<button class="btn btn-secondary btn-sm" onclick="openTopUp(${s.id})">Top Up</button>${s.active?`<button class="btn btn-danger btn-sm" onclick="cancel(${s.id})">Cancel</button>`:""}</div></div>`;
+    return`<div class="stream-row"><div><div class="stream-label">${escHtml(s.label)||"Untitled Stream"}</div><div class="stream-meta"><span>To: ${s.recipient.slice(0,6)}...${s.recipient.slice(-4)}</span><span>${amt} USDC · ${interval}</span><span>Balance: ${bal} USDC</span><span>Paid: ${paid} USDC</span></div><span class="stream-status ${statusClass}">${statusText}</span><div class="progress-bar"><div class="progress-fill" style="width:${progPct}%"></div></div></div><div class="stream-actions"><div class="stream-amount">${amt} USDC<br/><span style="font-size:0.7rem;color:var(--text-3)">/ ${interval.toLowerCase()}</span></div>${isDue&&s.active&&Number(s.balance)>0?`<button class="btn btn-primary btn-sm" onclick="collect(${s.id})">Collect</button>`:""}<button class="btn btn-secondary btn-sm" onclick="openTopUp(${s.id})">Top Up</button>${true?'<button class="btn btn-ghost btn-sm" onclick="showHistory('+Number(s.id)+')">History</button>':""}${s.active?`<button class="btn btn-danger btn-sm" onclick="cancel(${s.id})">Cancel</button>`:""}</div></div>`;
   }).join("");
 }
 function updateStats(streams){
@@ -393,10 +402,12 @@ async function doCreate(){
   const interval=parseInt(document.getElementById("f-interval").value);
   const depStr=document.getElementById("f-deposit").value.trim();
   const amount=ethers.parseUnits(amtStr,6);const deposit=ethers.parseUnits(depStr,6);
+  const startTimeInput=document.getElementById("f-starttime").value;
+  const startTime=startTimeInput?Math.floor(new Date(startTimeInput).getTime()/1000):Math.floor(Date.now()/1000);
   try{
     setLoading("Approving USDC...");const allowance=await usdc.allowance(address,FLOWPAY_ADDR);
     if(allowance<deposit){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256);await tx.wait()}
-    setLoading("Creating stream...");const tx=await flowpay.createStream(recipient,amount,interval,deposit,label||"Payment Stream");await tx.wait();
+    setLoading("Creating stream...");const tx=await flowpay.createStream(recipient,amount,interval,deposit,label||"Payment Stream",startTime);await tx.wait();
     toast("Stream created.","success");
     ["f-label","f-recipient","f-amount","f-deposit"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("f-interval").value="1";document.getElementById("stream-preview").style.display="none";
@@ -409,6 +420,26 @@ async function doCreate(){
     if(createStep==="confirm"){createStep="preview";const btn=document.getElementById("create-btn");btn.textContent="Preview Stream";btn.style.background="";btn.style.borderColor="";document.getElementById("stream-preview").style.display="none"}
   })
 });
+async function showHistory(streamId){
+  openModal('history-modal');
+  const body = document.getElementById('history-body');
+  body.innerHTML = '<div class="stream-empty">Loading...</div>';
+  try {
+    const provider2 = new ethers.JsonRpcProvider(ARC_RPC,{chainId:ARC_CHAIN_ID,name:'arc-testnet'},{staticNetwork:true});
+    const contract2 = new ethers.Contract(FLOWPAY_ADDR, FLOWPAY_ABI, provider2);
+    const filter = contract2.filters.PaymentExecuted(streamId);
+    const events = await contract2.queryFilter(filter, -9000);
+    body.innerHTML = events.reverse().map(e => {
+      const amt = formatUsdc(e.args.amount);
+      const date = new Date(Number(e.args.timestamp)*1000);
+      const dateStr = date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+      const timeStr = date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:0.78rem;"><div><div style="color:var(--text-0);margin-bottom:0.2rem;">'+amt+' USDC sent</div><div style="color:var(--text-3);">'+dateStr+' at '+timeStr+'</div></div><span style="color:var(--green);font-size:0.7rem;">CONFIRMED</span></div>';
+    }).join('');
+  } catch(e) {
+    body.innerHTML = '<div class="stream-empty">Error: '+e.message+'</div>';
+  }
+}
 function switchTab(name,el){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");
   ["outgoing","incoming","new","swap"].forEach(t=>document.getElementById("tab-"+t).style.display=t===name?"block":"none");

@@ -10,10 +10,10 @@ interface IERC20 {
 
 contract FlowPay {
     address public constant USDC = 0x3600000000000000000000000000000000000000;
+    uint256 public constant INTERVAL_THIRTY_MIN = 30 minutes;
     uint256 public constant INTERVAL_HOURLY  = 1 hours;
     uint256 public constant INTERVAL_DAILY   = 1 days;
     uint256 public constant INTERVAL_WEEKLY  = 7 days;
-    uint256 public constant INTERVAL_THIRTY_MIN = 30 minutes;
     uint256 public constant INTERVAL_MONTHLY = 30 days;
     uint256 public constant MAX_STREAMS_PER_USER = 20;
 
@@ -37,7 +37,7 @@ contract FlowPay {
     mapping(uint256 => Stream) public streams;
     mapping(address => uint256[]) private _userStreams;
 
-    event StreamCreated(uint256 indexed streamId, address indexed sender, address indexed recipient, uint256 amountPerInterval, Interval interval, uint256 deposit, string label);
+    event StreamCreated(uint256 indexed streamId, address indexed sender, address indexed recipient, uint256 amountPerInterval, Interval interval, uint256 deposit, string label, uint256 startTime);
     event PaymentExecuted(uint256 indexed streamId, address indexed recipient, uint256 amount, uint256 timestamp);
     event StreamCancelled(uint256 indexed streamId, address indexed sender, uint256 refundAmount);
     event ToppedUp(uint256 indexed streamId, address indexed sender, uint256 amount);
@@ -52,18 +52,46 @@ contract FlowPay {
         _;
     }
 
-    function createStream(address recipient, uint256 amountPerInterval, Interval interval, uint256 deposit, string calldata label) external returns (uint256 streamId) {
+    function createStream(
+        address recipient,
+        uint256 amountPerInterval,
+        Interval interval,
+        uint256 deposit,
+        string calldata label,
+        uint256 startTime
+    ) external returns (uint256 streamId) {
         require(recipient != address(0), "FlowPay: zero recipient");
         require(recipient != msg.sender, "FlowPay: cannot stream to self");
         require(amountPerInterval > 0, "FlowPay: zero amount");
         require(deposit >= amountPerInterval, "FlowPay: deposit below one interval");
         require(_userStreams[msg.sender].length < MAX_STREAMS_PER_USER, "FlowPay: max streams reached");
+        require(startTime >= block.timestamp, "FlowPay: start time in the past");
+
         bool ok = IERC20(USDC).transferFrom(msg.sender, address(this), deposit);
         require(ok, "FlowPay: USDC transfer failed");
+
         streamId = _nextStreamId++;
-        streams[streamId] = Stream({ id: streamId, sender: msg.sender, recipient: recipient, amountPerInterval: amountPerInterval, interval: interval, startTime: block.timestamp, lastExecuted: block.timestamp, totalDeposited: deposit, totalPaid: 0, active: true, label: label });
+
+        // lastExecuted = startTime - interval so first payment fires exactly at startTime
+        uint256 secs = intervalSeconds(interval);
+        uint256 lastExecuted = startTime - secs;
+
+        streams[streamId] = Stream({
+            id: streamId,
+            sender: msg.sender,
+            recipient: recipient,
+            amountPerInterval: amountPerInterval,
+            interval: interval,
+            startTime: startTime,
+            lastExecuted: lastExecuted,
+            totalDeposited: deposit,
+            totalPaid: 0,
+            active: true,
+            label: label
+        });
+
         _userStreams[msg.sender].push(streamId);
-        emit StreamCreated(streamId, msg.sender, recipient, amountPerInterval, interval, deposit, label);
+        emit StreamCreated(streamId, msg.sender, recipient, amountPerInterval, interval, deposit, label, startTime);
     }
 
     function executePayment(uint256 streamId) external streamExists(streamId) {
@@ -118,6 +146,7 @@ contract FlowPay {
     function getUserStreams(address user) external view returns (uint256[] memory) { return _userStreams[user]; }
     function streamBalance(uint256 streamId) external view streamExists(streamId) returns (uint256) { return _streamBalance(streams[streamId]); }
     function nextDueTime(uint256 streamId) external view streamExists(streamId) returns (uint256) { return _nextDueTime(streams[streamId]); }
+
     function intervalSeconds(Interval interval) public pure returns (uint256) {
         if (interval == Interval.ThirtyMin) return INTERVAL_THIRTY_MIN;
         if (interval == Interval.Hourly)  return INTERVAL_HOURLY;
