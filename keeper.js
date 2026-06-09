@@ -85,14 +85,15 @@ async function checkAndExecute() {
           executed++;
         } else {
           try {
-            const dueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
-            const [due] = iface.decodeFunctionResult("nextDueTime", dueData);
-            const mins = Math.ceil((Number(due) - now) / 60);
-            if (mins > 0) {
+            const streamData = await call(iface.encodeFunctionData("getStream", [id]));
+            const [stream] = iface.decodeFunctionResult("getStream", streamData);
+              console.log(`[${time}] Stream ${id}: inactive - top up to resume`);
+            } else {
+              const dueData = await call(iface.encodeFunctionData("nextDueTime", [id]));
+              const [due] = iface.decodeFunctionResult("nextDueTime", dueData);
+              const mins = Math.ceil((Number(due) - now) / 60);
               console.log(`[${time}] Stream ${id}: next payment in ${mins}min`);
               pending++;
-            } else {
-              console.log(`[${time}] Stream ${id}: inactive or empty`);
             }
           } catch(e) {}
         }
