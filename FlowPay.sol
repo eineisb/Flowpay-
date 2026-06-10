@@ -75,7 +75,7 @@ contract FlowPay {
 
         // lastExecuted = startTime - interval so first payment fires exactly at startTime
         uint256 secs = intervalSeconds(interval);
-        uint256 lastExecuted = startTime - secs;
+        uint256 lastExecuted = startTime;
 
         streams[streamId] = Stream({
             id: streamId,
