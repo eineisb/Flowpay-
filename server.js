@@ -15,7 +15,17 @@ const CHECK_EVERY  = 60 * 1000; // every minute
 if (!PRIVATE_KEY) { console.error("ERROR: Set PRIVATE_KEY"); process.exit(1); }
 
 const wallet = new ethers.Wallet(PRIVATE_KEY);
-const paymentHistory = {};
+const HISTORY_FILE = '/tmp/payment_history.json';
+let paymentHistory = {};
+try {
+  if (fs.existsSync(HISTORY_FILE)) {
+    paymentHistory = JSON.parse(fs.readFileSync(HISTORY_FILE,'utf8'));
+    console.log('Loaded history:', Object.keys(paymentHistory).length, 'stream(s)');
+  }
+} catch(e) { paymentHistory = {}; }
+function saveHistory() {
+  try { fs.writeFileSync(HISTORY_FILE, JSON.stringify(paymentHistory)); } catch(e) {}
+}
 
 const iface = new ethers.Interface([
   "function getUserStreams(address) view returns (uint256[])",
