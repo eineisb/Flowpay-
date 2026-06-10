@@ -15,16 +15,39 @@ const CHECK_EVERY  = 60 * 1000; // every minute
 if (!PRIVATE_KEY) { console.error("ERROR: Set PRIVATE_KEY"); process.exit(1); }
 
 const wallet = new ethers.Wallet(PRIVATE_KEY);
-const HISTORY_FILE = '/tmp/payment_history.json';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_REPO  = 'eineisb/Flowpay-';
+const HISTORY_PATH = 'history.json';
 let paymentHistory = {};
-try {
-  if (fs.existsSync(HISTORY_FILE)) {
-    paymentHistory = JSON.parse(fs.readFileSync(HISTORY_FILE,'utf8'));
-    console.log('Loaded history:', Object.keys(paymentHistory).length, 'stream(s)');
-  }
-} catch(e) { paymentHistory = {}; }
-function saveHistory() {
-  try { fs.writeFileSync(HISTORY_FILE, JSON.stringify(paymentHistory)); } catch(e) {}
+let historySha = null;
+
+async function loadHistory() {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${HISTORY_PATH}`, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      historySha = data.sha;
+      paymentHistory = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8'));
+      console.log('Loaded history:', Object.keys(paymentHistory).length, 'stream(s)');
+    }
+  } catch(e) { console.log('No history file yet'); }
+}
+
+async function saveHistory() {
+  try {
+    const content = Buffer.from(JSON.stringify(paymentHistory)).toString('base64');
+    const body = { message: 'update: payment history', content, branch: 'main' };
+    if (historySha) body.sha = historySha;
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${HISTORY_PATH}`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.content) historySha = data.content.sha;
+  } catch(e) { console.error('History save failed:', e.message); }
 }
 
 const iface = new ethers.Interface([
@@ -178,8 +201,9 @@ const server = http.createServer((req, res) => {
   }));
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`FlowPay Keeper server running on port ${PORT}`);
+await loadHistory();
   console.log(`Wallet: ${wallet.address}`);
 });
 
