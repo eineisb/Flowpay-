@@ -430,17 +430,15 @@ async function showHistory(streamId){
   const body = document.getElementById('history-body');
   body.innerHTML = '<div class="stream-empty">Loading...</div>';
   try {
-    const provider2 = new ethers.JsonRpcProvider("https://5042002.rpc.thirdweb.com");
-    const historyABI = ["event PaymentExecuted(uint256 indexed streamId,address indexed recipient,uint256 amount,uint256 timestamp)"];
-const contract2 = new ethers.Contract(FLOWPAY_ADDR, historyABI, provider2);
-    const filter = contract2.filters.PaymentExecuted(BigInt(streamId));
-    const events = await contract2.queryFilter(filter, -9000);
-    if(!events.length){ body.innerHTML = '<div class="stream-empty">No payments yet.</div>'; return; }
-    body.innerHTML = events.reverse().map(e => {
-      const amt = formatUsdc(e.args.amount);
-      const date = new Date(Number(e.args.timestamp)*1000);
+    const res = await fetch('https://flowpay-wks2.onrender.com/history/'+streamId);
+    const payments = await res.json();
+    if(!payments.length){ body.innerHTML = '<div class="stream-empty">No payments yet.</div>'; return; }
+    body.innerHTML = payments.map(p => {
+      const date = new Date(p.timestamp);
       const dateStr = date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
       const timeStr = date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:0.78rem;"><div><div style="color:var(--text-0);margin-bottom:0.2rem;">'+p.amount.toFixed(2)+' USDC sent</div><div style="color:var(--text-3);">'+dateStr+' at '+timeStr+'</div><div style="color:var(--text-3);font-size:0.7rem;">tx: '+p.txHash.slice(0,10)+'...</div></div><span style="color:var(--green);font-size:0.7rem;">CONFIRMED</span></div>';
+    }).join('');
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:0.78rem;"><div><div style="color:var(--text-0);margin-bottom:0.2rem;">'+amt+' USDC sent</div><div style="color:var(--text-3);">'+dateStr+' at '+timeStr+'</div></div><span style="color:var(--green);font-size:0.7rem;">CONFIRMED</span></div>';
     }).join('');
   } catch(e) {
