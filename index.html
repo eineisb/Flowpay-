@@ -430,11 +430,12 @@ async function showHistory(streamId){
   const body = document.getElementById('history-body');
   body.innerHTML = '<div class="stream-empty">Loading...</div>';
   try {
-    const provider2 = new ethers.JsonRpcProvider("https://5042002.rpc.thirdweb.com", ethers.Network.from(ARC_CHAIN_ID));
+    const provider2 = new ethers.JsonRpcProvider("https://5042002.rpc.thirdweb.com");
     const historyABI = ["event PaymentExecuted(uint256 indexed streamId,address indexed recipient,uint256 amount,uint256 timestamp)"];
 const contract2 = new ethers.Contract(FLOWPAY_ADDR, historyABI, provider2);
-    const filter = contract2.filters.PaymentExecuted(streamId);
+    const filter = contract2.filters.PaymentExecuted(BigInt(streamId));
     const events = await contract2.queryFilter(filter, -9000);
+    if(!events.length){ body.innerHTML = '<div class="stream-empty">No payments yet.</div>'; return; }
     body.innerHTML = events.reverse().map(e => {
       const amt = formatUsdc(e.args.amount);
       const date = new Date(Number(e.args.timestamp)*1000);
