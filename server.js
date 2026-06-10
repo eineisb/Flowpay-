@@ -201,10 +201,13 @@ const server = http.createServer((req, res) => {
   }));
 });
 
-server.listen(PORT, async () => {
+server.listen(PORT, () => {
   console.log(`FlowPay Keeper server running on port ${PORT}`);
-await loadHistory();
   console.log(`Wallet: ${wallet.address}`);
+});
+
+loadHistory().then(() => {
+  console.log('History loaded, keeper ready');
 });
 
 // Self-ping to prevent Render spin-down
