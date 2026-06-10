@@ -131,6 +131,7 @@ async function checkAndExecute() {
         console.log(`[${time}] Stream ${stream.id}: tx ${txHash}`);
         if(!paymentHistory[stream.id]) paymentHistory[stream.id] = [];
         paymentHistory[stream.id].unshift({amount:Number(stream.amountPerInterval)/1e6,timestamp:Date.now(),txHash});
+        saveHistory();
         executed++;
       }catch(e){
         console.error(`[${time}] Stream ${stream.id}: ${e.message}`);
