@@ -15,6 +15,7 @@ const CHECK_EVERY  = 60 * 1000; // every minute
 if (!PRIVATE_KEY) { console.error("ERROR: Set PRIVATE_KEY"); process.exit(1); }
 
 const wallet = new ethers.Wallet(PRIVATE_KEY);
+const paymentHistory = {};
 
 const iface = new ethers.Interface([
   "function getUserStreams(address) view returns (uint256[])",
@@ -128,6 +129,8 @@ async function checkAndExecute() {
         console.log(`[${time}] Stream ${stream.id} (${stream.label}): executing...`);
         const txHash = await sendTx(iface.encodeFunctionData("executePayment",[stream.id]));
         console.log(`[${time}] Stream ${stream.id}: tx ${txHash}`);
+        if(!paymentHistory[stream.id]) paymentHistory[stream.id] = [];
+        paymentHistory[stream.id].unshift({amount:Number(stream.amountPerInterval)/1e6,timestamp:Date.now(),txHash});
         executed++;
       }catch(e){
         console.error(`[${time}] Stream ${stream.id}: ${e.message}`);
@@ -147,6 +150,12 @@ async function checkAndExecute() {
 
 // HTTP server — keeps Render alive + shows status
 const server = http.createServer((req, res) => {
+  if(req.url.startsWith("/history/")){
+    const id=req.url.split("/")[2];
+    res.writeHead(200,{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"});
+    res.end(JSON.stringify(paymentHistory[id]||[]));
+    return;
+  }
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify({
     status: "running",
