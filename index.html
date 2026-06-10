@@ -335,7 +335,7 @@ async function loadIncoming(){
       const amt=formatUsdc(s.amountPerInterval);
       const interval=INTERVALS[Number(s.interval)]||'Unknown';
       const status=s.active?'active':'inactive';
-      return '<div class="incoming-row"><div class="stream-label">'+escHtml(s.label)+'</div><div class="stream-meta"><span>From: '+s.sender.slice(0,6)+'...'+s.sender.slice(-4)+'</span><span>'+amt+' USDC / '+interval+'</span></div><span class="stream-status '+status+'">'+status.toUpperCase()+'</span>'+(s.active?'<div style="margin-top:0.6rem"><button class="btn btn-primary btn-sm" onclick="collect('+Number(s.id)+')">Collect Payment</button></div>':'')+'</div>';
+      return '<div class="incoming-row"><div class="stream-label">'+escHtml(s.label)+'</div><div class="stream-meta"><span>From: '+s.sender.slice(0,6)+'...'+s.sender.slice(-4)+'</span><span>'+amt+' USDC / '+interval+'</span></div><span class="stream-status '+status+'">'+status.toUpperCase()+'</span><div style="margin-top:0.6rem;display:flex;gap:0.5rem;">'+(s.active?'<button class="btn btn-primary btn-sm" onclick="collect('+Number(s.id)+')">Collect Payment</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="showHistory('+Number(s.id)+')">History</button></div></div>';
     }).join('');
   }catch(e){list.innerHTML='<div class="stream-empty">Error: '+e.message+'</div>';}
 }
