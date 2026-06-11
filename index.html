@@ -464,30 +464,3 @@ document.querySelectorAll(".modal-overlay").forEach(o=>o.addEventListener("click
 </script>
 </body>
 </html>
-<div class="modal-overlay" id="topup-modal">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title">Top Up Stream</span><button class="modal-close" onclick="closeModal('topup-modal')">&#x2715;</button></div>
-    <div class="modal-body">
-      <div class="field"><label class="field-label" for="topup-amount">Amount (USDC)</label><input class="field-input" id="topup-amount" type="number" placeholder="100" min="0.01" step="any"/></div>
-      <div style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-2);font-family:var(--font-mono)">Stream ID: <span id="topup-stream-id" style="color:var(--text-1)"></span></div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-secondary" style="flex:1" onclick="closeModal('topup-modal')">Cancel</button><button class="btn btn-primary" style="flex:1" onclick="confirmTopUp()">Top Up</button></div>
-  </div>
-</div>
-<div class="modal-overlay" id="wallet-modal">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title">Wallet</span><button class="modal-close" onclick="closeModal('wallet-modal')">&#x2715;</button></div>
-    <div class="modal-body">
-      <div style="display:flex;flex-direction:column;gap:0.75rem">
-        <div><div class="field-label" style="margin-bottom:0.35rem">Address</div><div class="addr" id="wallet-full-addr"></div></div>
-        <div><div class="field-label" style="margin-bottom:0.35rem">USDC Balance</div><div style="font-family:var(--font-mono);font-size:1rem;color:var(--accent)" id="wallet-usdc-balance">-</div></div>
-        <div><div class="field-label" style="margin-bottom:0.35rem">Network</div><div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-1)">Arc Testnet · Chain 5042002</div></div>
-      </div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-secondary btn-full" onclick="disconnect()">Disconnect</button></div>
-  </div>
-</div>
-<div id="toast-area"></div>
-
-</body>
-</html>
