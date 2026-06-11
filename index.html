@@ -424,7 +424,7 @@ async function doCreate(){
     if(createStep==="confirm"){createStep="preview";const btn=document.getElementById("create-btn");btn.textContent="Preview Stream";btn.style.background="";btn.style.borderColor="";document.getElementById("stream-preview").style.display="none"}
   })
 });
-async function showHistory(streamId){
+async function showHistory(streamId, type="sent"){
   openModal('history-modal');
   const body = document.getElementById('history-body');
   body.innerHTML = '<div class="stream-empty">Loading...</div>';
@@ -436,7 +436,7 @@ async function showHistory(streamId){
       const date = new Date(p.timestamp);
       const dateStr = date.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
       const timeStr = date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:0.78rem;"><div><div style="color:var(--text-0);margin-bottom:0.2rem;">'+p.amount.toFixed(2)+' USDC sent</div><div style="color:var(--text-3);">'+dateStr+' at '+timeStr+'</div><div style="color:var(--text-3);font-size:0.7rem;">tx: '+p.txHash.slice(0,10)+'...</div></div><span style="color:var(--green);font-size:0.7rem;">CONFIRMED</span></div>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:0.78rem;"><div><div style="color:var(--text-0);margin-bottom:0.2rem;">'+p.amount.toFixed(2)+' USDC '+type+'</div><div style="color:var(--text-3);">'+dateStr+' at '+timeStr+'</div><div style="color:var(--text-3);font-size:0.7rem;">tx: '+p.txHash.slice(0,10)+'...</div></div><span style="color:var(--green);font-size:0.7rem;">CONFIRMED</span></div>';
     }).join('');
   } catch(e) {
     body.innerHTML = '<div class="stream-empty" style="color:var(--red);">Error: '+e.message+'</div>';
