@@ -6,7 +6,7 @@ const RPCS = [
   "https://rpc.blockdaemon.testnet.arc.network"
 ];
 const CHAIN_ID     = 5042002;
-const FLOWPAY_ADDR = "0x0Fd6e2e7Aff8363Cb57A60f5Cee17209C72EA156";
+const FLOWPAY_ADDR = "0x15d396BC2499463cD719A32229a9B1419381B814";
 const PRIVATE_KEY  = process.env.PRIVATE_KEY;
 const CHECK_EVERY  = 1 * 60 * 1000;
 const ONCE         = process.argv.includes("--once");
