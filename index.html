@@ -465,6 +465,16 @@ function formatUsdc(raw){if(!raw)return"0.00";try{return(Number(raw.toString())/
 function escHtml(str){if(!str)return"";return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function getErr(e){if(e?.reason)return e.reason;if(e?.message){const m=e.message;const match=m.match(/execution reverted: "?([^"]+)"?/);if(match)return match[1];if(m.length<120)return m;return m.slice(0,120)+"..."}return"Transaction failed"}
 document.querySelectorAll(".modal-overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open")}));
+
+// Auto-reconnect on page load
+(async()=>{
+  if(window.ethereum){
+    try{
+      const accounts = await window.ethereum.request({method:"eth_accounts"});
+      if(accounts.length>0) await connectWallet();
+    }catch(e){}
+  }
+})();
 </script>
 </body>
 </html>
