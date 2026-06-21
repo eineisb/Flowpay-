@@ -433,8 +433,9 @@ async function showHistory(streamId, type="sent"){
   const body = document.getElementById('history-body');
   body.innerHTML = '<div class="stream-empty">Loading...</div>';
   try {
-    const res = await fetch('https://flowpay-wks2.onrender.com/history/'+streamId);
-    const payments = await res.json();
+    const res = await fetch('https://raw.githubusercontent.com/eineisb/Flowpay-/main/history.json?t='+Date.now());
+    const allHistory = await res.json();
+    const payments = allHistory[streamId] || [];
     if(!payments.length){ body.innerHTML = '<div class="stream-empty">No payments yet.</div>'; return; }
     body.innerHTML = payments.map(p => {
       const date = new Date(p.timestamp);
