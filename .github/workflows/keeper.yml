@@ -1,28 +1,27 @@
-# Disabled - Render keeper handles automation
-# name: FlowPay Keeper
-# 
-# on:
-#   schedule:
-#     - cron: '*/5 * * * *'  # every minute
-#   workflow_dispatch:       # manual trigger
-# 
-# jobs:
-#   keeper:
-#     runs-on: ubuntu-latest
-#     timeout-minutes: 2
-# 
-#     steps:
-#       - uses: actions/checkout@v4
-# 
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: "22"
-# 
-#       - name: Install dependencies
-#         run: npm install ethers
-# 
-#       - name: Run keeper check
-#         env:
-#           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-#         run: node keeper.js --once
-# 
+name: FlowPay Keeper
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keeper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install ethers
+
+      - name: Run keeper check
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.HISTORY_TOKEN }}
+        run: node keeper.js
