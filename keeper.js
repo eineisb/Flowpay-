@@ -148,8 +148,9 @@ async function checkAndExecute() {
       console.log(`[${time}] Stream ${stream.id} (${stream.label}): executing...`);
       const txHash = await sendTx(iface.encodeFunctionData("executePayment",[stream.id]));
       console.log(`[${time}] Stream ${stream.id}: tx ${txHash}`);
-      if(!paymentHistory[stream.id]) paymentHistory[stream.id] = [];
-      paymentHistory[stream.id].unshift({amount:Number(stream.amountPerInterval)/1e6,timestamp:Date.now(),txHash});
+      const historyKey = FLOWPAY_ADDR + '-' + stream.id;
+      if(!paymentHistory[historyKey]) paymentHistory[historyKey] = [];
+      paymentHistory[historyKey].unshift({amount:Number(stream.amountPerInterval)/1e6,timestamp:Date.now(),txHash});
       await saveHistory();
       executed++;
     }catch(e){

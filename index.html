@@ -435,7 +435,7 @@ async function showHistory(streamId, type="sent"){
   try {
     const res = await fetch('https://raw.githubusercontent.com/eineisb/Flowpay-/main/history.json?t='+Date.now());
     const allHistory = await res.json();
-    const payments = allHistory[streamId] || [];
+    const payments = allHistory[FLOWPAY_ADDR + '-' + streamId] || [];
     if(!payments.length){ body.innerHTML = '<div class="stream-empty">No payments yet.</div>'; return; }
     body.innerHTML = payments.map(p => {
       const date = new Date(p.timestamp);
