@@ -80,7 +80,7 @@ async function call(data) {
 
 async function sendTx(data) {
   const [nonce, gasPrice] = await Promise.all([
-    rpc("eth_getTransactionCount", [wallet.address, "latest"]),
+    rpc("eth_getTransactionCount", [wallet.address, "pending"]),
     rpc("eth_gasPrice", [])
   ]);
   const signed = await wallet.signTransaction({
