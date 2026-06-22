@@ -102,7 +102,7 @@ contract FlowPay {
         require(block.timestamp >= _nextDueTime(s), "FlowPay: payment not yet due");
         uint256 balance = _streamBalance(s);
         require(balance >= s.amountPerInterval, "FlowPay: insufficient stream balance");
-        s.lastExecuted = block.timestamp;
+        s.lastExecuted += intervalSeconds(s.interval);
         s.totalPaid += s.amountPerInterval;
         bool ok = IERC20(USDC).transfer(s.recipient, s.amountPerInterval);
         require(ok, "FlowPay: USDC transfer failed");

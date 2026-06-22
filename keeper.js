@@ -6,7 +6,7 @@ const RPCS = [
   "https://rpc.blockdaemon.testnet.arc.network"
 ];
 const CHAIN_ID     = 5042002;
-const FLOWPAY_ADDR = "0x15d396BC2499463cD719A32229a9B1419381B814";
+const FLOWPAY_ADDR = "0xaF8f43eCbAc5844e16e780634273072676347cA2";
 const PRIVATE_KEY  = process.env.PRIVATE_KEY;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO  = 'eineisb/Flowpay-';
