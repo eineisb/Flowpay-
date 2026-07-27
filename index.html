@@ -325,7 +325,7 @@ async function loadStreams(){
     ids.forEach((id,i)=>{ dueMap[id]=dueTimes[i]; });
     const streamData=fetched.map((s,i)=>({id:s.id,sender:s.sender,recipient:s.recipient,amountPerInterval:s.amountPerInterval,interval:s.interval,startTime:s.startTime,lastExecuted:s.lastExecuted,totalDeposited:s.totalDeposited,totalPaid:s.totalPaid,active:s.active,label:s.label,createdAt:s.createdAt,balance:balances[i],due:dueMap[ids[i]]}));
     renderStreams(streamData);updateStats(streamData);
-  }catch(e){list.innerHTML='<div class="stream-empty">Error: '+e.message+'</div>';console.error('loadStreams error:',e)}
+  }catch(e){list.innerHTML='<div class="stream-empty">Error loading streams.</div>'}
 }
 async function loadIncoming(){
   const list=document.getElementById('incoming-list');
