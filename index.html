@@ -286,7 +286,9 @@ async function connectWallet(){
     provider=new ethers.BrowserProvider(window.ethereum);
     signer=await provider.getSigner();
     address=await signer.getAddress();
+    const readProvider=new ethers.JsonRpcProvider("https://rpc.blockdaemon.testnet.arc.network");
     flowpay=new ethers.Contract(FLOWPAY_ADDR,FLOWPAY_ABI,signer);
+    window.flowpayRead=new ethers.Contract(FLOWPAY_ADDR,FLOWPAY_ABI,readProvider);
     usdc=new ethers.Contract(USDC_ADDR,ERC20_ABI,signer);
     onConnected();
   }catch(e){toast(e.message||"Connection failed","error")}
@@ -312,12 +314,12 @@ async function loadStreams(){
   const list=document.getElementById("streams-list");
   list.innerHTML='<div class="stream-empty">Loading...</div>';
   try{
-    const ids=await flowpay.getUserStreams(address);
+    const ids=await window.flowpayRead.getUserStreams(address);
     if(!ids.length){list.innerHTML='<div class="stream-empty">No streams yet. Create one in the New Stream tab.</div>';updateStats([]);return}
     const [fetched,balances,dueTimes]=await Promise.all([
-      Promise.all(ids.map(id=>flowpay.getStream(id))),
-      Promise.all(ids.map(id=>flowpay.streamBalance(id).catch(()=>BigInt(0)))),
-      Promise.all(ids.map(id=>flowpay.nextDueTime(id).catch(()=>0)))
+      Promise.all(ids.map(id=>window.flowpayRead.getStream(id))),
+      Promise.all(ids.map(id=>window.flowpayRead.streamBalance(id).catch(()=>BigInt(0)))),
+      Promise.all(ids.map(id=>window.flowpayRead.nextDueTime(id).catch(()=>0)))
     ]);
     const dueMap={};
     ids.forEach((id,i)=>{ dueMap[id]=dueTimes[i]; });
@@ -330,7 +332,7 @@ async function loadIncoming(){
   list.innerHTML='<div class="stream-empty">Scanning...</div>';
   try{
     const ids=Array.from({length:20},(_,i)=>i+1);
-    const results=await Promise.allSettled(ids.map(id=>flowpay.getStream(id)));
+    const results=await Promise.allSettled(ids.map(id=>window.flowpayRead.getStream(id)));
     const incoming=results
       .filter(r=>r.status==='fulfilled'&&Number(r.value.id)>0&&r.value.recipient.toLowerCase()===address.toLowerCase())
       .map(r=>r.value)
