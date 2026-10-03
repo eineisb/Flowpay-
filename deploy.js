@@ -3,7 +3,7 @@ const solc       = require("solc");
 const fs         = require("fs");
 const path       = require("path");
 
-const RPC_URL     = "https://arc-testnet.drpc.org";
+const RPC_URL     = "https://5042002.rpc.thirdweb.com";
 const CHAIN_ID    = 5042002;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
