@@ -286,7 +286,7 @@ async function connectWallet(){
     provider=new ethers.BrowserProvider(window.ethereum);
     signer=await provider.getSigner();
     address=await signer.getAddress();
-    const readProvider=new ethers.JsonRpcProvider("https://rpc.testnet.arc.io");
+    const readProvider=new ethers.JsonRpcProvider("https://rpc.testnet.arc.io",{chainId:ARC_CHAIN_ID,name:"arc-testnet"},{staticNetwork:true});
     flowpay=new ethers.Contract(FLOWPAY_ADDR,FLOWPAY_ABI,signer);
     window.flowpayRead=new ethers.Contract(FLOWPAY_ADDR,FLOWPAY_ABI,readProvider);
     usdc=new ethers.Contract(USDC_ADDR,ERC20_ABI,signer);
