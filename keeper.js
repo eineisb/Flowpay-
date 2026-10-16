@@ -1,9 +1,9 @@
 const { ethers } = require("ethers");
 
 const RPCS = [
-  "https://rpc.blockdaemon.testnet.arc.network",
-  "https://rpc.quicknode.testnet.arc.network",
-  "https://5042002.rpc.thirdweb.com"
+  "https://rpc.testnet.arc.io",
+  "https://rpc.blockdaemon.testnet.arc.io",
+  "https://rpc.quicknode.testnet.arc.io"
 ];
 const CHAIN_ID     = 5042002;
 const FLOWPAY_ADDR = "0xaF8f43eCbAc5844e16e780634273072676347cA2";
