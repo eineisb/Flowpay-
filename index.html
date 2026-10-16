@@ -290,6 +290,7 @@ async function connectWallet(){
     flowpay=new ethers.Contract(FLOWPAY_ADDR,FLOWPAY_ABI,signer);
     window.flowpayRead=new ethers.Contract(FLOWPAY_ADDR,FLOWPAY_ABI,readProvider);
     usdc=new ethers.Contract(USDC_ADDR,ERC20_ABI,signer);
+    window.usdcRead=new ethers.Contract(USDC_ADDR,ERC20_ABI,readProvider);
     onConnected();
   }catch(e){toast(e.message||"Connection failed","error")}
 }
@@ -308,7 +309,7 @@ function disconnect(){closeModal("wallet-modal");location.reload()}
 function showWalletModal(){document.getElementById("wallet-usdc-balance").textContent=document.getElementById("stat-usdc").textContent;openModal("wallet-modal")}
 async function loadAll(){await Promise.all([loadBalance(),loadStreams()])}
 async function loadBalance(){
-  try{const bal=await usdc.balanceOf(address);const fmt=formatUsdc(bal);document.getElementById("stat-usdc").textContent=fmt+" USDC";document.getElementById("wallet-usdc-balance").textContent=fmt+" USDC"}catch(e){}
+  try{const bal=await window.usdcRead.balanceOf(address);const fmt=formatUsdc(bal);document.getElementById("stat-usdc").textContent=fmt+" USDC";document.getElementById("wallet-usdc-balance").textContent=fmt+" USDC"}catch(e){}
 }
 async function loadStreams(){
   const list=document.getElementById("streams-list");
