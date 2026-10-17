@@ -274,8 +274,18 @@ const INTERVAL_SECONDS=[1800,3600,86400,604800,2592000];
 const FLOWPAY_ABI=["function createStream(address recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label,uint256 startTime) returns (uint256)","function executePayment(uint256 streamId)","function topUp(uint256 streamId,uint256 amount)","function cancelStream(uint256 streamId)","function getStream(uint256 streamId) view returns (tuple(uint256 id,address sender,address recipient,uint256 amountPerInterval,uint8 interval,uint256 startTime,uint256 lastExecuted,uint256 totalDeposited,uint256 totalPaid,bool active,string label,uint256 createdAt))","function getUserStreams(address user) view returns (uint256[])","function streamBalance(uint256 streamId) view returns (uint256)","function nextDueTime(uint256 streamId) view returns (uint256)","event StreamCreated(uint256 indexed streamId,address indexed sender,address indexed recipient,uint256 amountPerInterval,uint8 interval,uint256 deposit,string label,uint256 startTime)"];
 const ERC20_ABI=["function balanceOf(address) view returns (uint256)","function allowance(address owner,address spender) view returns (uint256)","function approve(address spender,uint256 amount) returns (bool)"];
 let provider,signer,address,flowpay,usdc,topupStreamId,createStep="preview";
+function getEthProvider(){
+  if(window.ethereum && window.ethereum.providers && window.ethereum.providers.length){
+    const nonBrave=window.ethereum.providers.find(p=>!p.isBraveWallet);
+    if(nonBrave) return nonBrave;
+    return window.ethereum.providers[0];
+  }
+  return window.ethereum;
+}
 async function connectWallet(){
-  if(!window.ethereum){toast("No wallet detected.","error");return}
+  const eth=getEthProvider();
+  if(!eth){toast("No wallet detected.","error");return}
+  window.ethereum=eth;
   try{
     await window.ethereum.request({method:"eth_requestAccounts"});
     const chainHex=await window.ethereum.request({method:"eth_chainId"});
