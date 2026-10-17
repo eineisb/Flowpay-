@@ -340,7 +340,12 @@ async function loadStreams(){
     if(!ids.length){list.innerHTML='<div class="stream-empty">No streams yet. Create one in the New Stream tab.</div>';updateStats([]);return}
     const [fetched,balances,dueTimes]=await Promise.all([
       Promise.all(ids.map(id=>window.flowpayRead.getStream(id))),
-      Promise.all(ids.map(id=>window.flowpayRead.streamBalance(id).catch(()=>BigInt(0)))),
+      Promise.all(ids.map(async id=>{
+        for(let i=0;i<3;i++){
+          try{return await window.flowpayRead.streamBalance(id)}catch(e){await new Promise(r=>setTimeout(r,500))}
+        }
+        return BigInt(0);
+      })),
       Promise.all(ids.map(id=>window.flowpayRead.nextDueTime(id).catch(()=>0)))
     ]);
     const dueMap={};
