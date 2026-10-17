@@ -498,7 +498,15 @@ function toast(msg,type="info",duration=4000){
 }
 function formatUsdc(raw){if(!raw)return"0.00";try{return(Number(raw.toString())/1e6).toFixed(2)}catch(e){return"0.00"}}
 function escHtml(str){if(!str)return"";return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function getErr(e){if(e?.reason)return e.reason;if(e?.message){const m=e.message;const match=m.match(/execution reverted: "?([^"]+)"?/);if(match)return match[1];if(m.length<120)return m;return m.slice(0,120)+"..."}return"Transaction failed"}
+function getErr(e){
+  if(e?.reason)return e.reason;
+  if(e?.revert?.args?.[0])return e.revert.args[0];
+  if(e?.info?.error?.message){const m=e.info.error.message;const match=m.match(/FlowPay: [^"\\]+/);if(match)return match[0];}
+  if(e?.error?.message){const m=e.error.message;const match=m.match(/FlowPay: [^"\\]+/);if(match)return match[0];}
+  if(e?.data?.message){const match=e.data.message.match(/FlowPay: [^"\\]+/);if(match)return match[0];}
+  if(e?.message){const m=e.message;const match=m.match(/FlowPay: [^"\\]+/)||m.match(/execution reverted: "?([^"]+)"?/);if(match)return match[1]||match[0];if(m.length<120)return m;return m.slice(0,120)+"..."}
+  return"Transaction failed"
+}
 document.querySelectorAll(".modal-overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open")}));
 
 // Auto-reconnect on page load
