@@ -325,7 +325,18 @@ async function loadStreams(){
   const list=document.getElementById("streams-list");
   list.innerHTML='<div class="stream-empty">Loading...</div>';
   try{
-    const ids=await window.flowpayRead.getUserStreams(address);
+    let ids;
+    try{
+      ids=await window.flowpayRead.getUserStreams(address);
+    }catch(err){
+      if(!window.__fp_reloaded){
+        window.__fp_reloaded=true;
+        setTimeout(()=>location.reload(),1200);
+        list.innerHTML='<div class="stream-empty">Reconnecting...</div>';
+        return;
+      }
+      throw err;
+    }
     if(!ids.length){list.innerHTML='<div class="stream-empty">No streams yet. Create one in the New Stream tab.</div>';updateStats([]);return}
     const [fetched,balances,dueTimes]=await Promise.all([
       Promise.all(ids.map(id=>window.flowpayRead.getStream(id))),
