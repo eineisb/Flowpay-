@@ -412,7 +412,7 @@ async function confirmTopUp(){
   const amount=ethers.parseUnits(amtStr,6);closeModal("topup-modal");
   try{
     setLoading("Approving USDC...");const allowance=await window.usdcRead.allowance(address,FLOWPAY_ADDR);
-    if(allowance<amount){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256);await tx.wait()}
+    if(allowance<amount){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256,{gasLimit:150000});await tx.wait()}
     setLoading("Topping up...");const tx=await flowpay.topUp(topupStreamId,amount);await tx.wait();toast("Stream topped up.","success");loadAll();
   }catch(e){toast(getErr(e),"error")}finally{clearLoading()}
 }
@@ -448,14 +448,14 @@ async function doCreate(){
   const startTime=startTimeInput?Math.floor(new Date(startTimeInput).getTime()/1000):Math.floor(Date.now()/1000)+60;
   try{
     setLoading("Approving USDC...");const allowance=await window.usdcRead.allowance(address,FLOWPAY_ADDR);
-    if(allowance<deposit){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256);await tx.wait()}
-    setLoading("Creating stream...");const tx=await flowpay.createStream(recipient,amount,interval,deposit,label||"Payment Stream",startTime);await tx.wait();
+    if(allowance<deposit){const tx=await usdc.approve(FLOWPAY_ADDR,ethers.MaxUint256,{gasLimit:150000});await tx.wait()}
+    setLoading("Creating stream...");const tx=await flowpay.createStream(recipient,amount,interval,deposit,label||"Payment Stream",startTime,{gasLimit:400000});await tx.wait();
     toast("Stream created.","success");
     ["f-label","f-recipient","f-amount","f-deposit"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("f-interval").value="1";document.getElementById("stream-preview").style.display="none";
     const btn=document.getElementById("create-btn");btn.textContent="Preview Stream";btn.style.background="";btn.style.borderColor="";createStep="preview";
     switchTab("outgoing",document.querySelectorAll(".tab")[0]);loadAll();
-  }catch(e){toast(getErr(e),"error")}finally{clearLoading()}
+  }catch(e){console.error("FlowPay createStream error:",e);toast(getErr(e),"error")}finally{clearLoading()}
 }
 ["f-label","f-recipient","f-amount","f-deposit","f-interval"].forEach(id=>{
   document.getElementById(id)?.addEventListener("input",()=>{
