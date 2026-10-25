@@ -364,7 +364,12 @@ async function loadIncoming(){
   list.innerHTML='<div class="stream-empty">Scanning...</div>';
   try{
     const ids=Array.from({length:50},(_,i)=>i+1);
-    const results=await Promise.allSettled(ids.map(id=>window.flowpayRead.getStream(id)));
+    const results=await Promise.allSettled(ids.map(async id=>{
+      for(let i=0;i<2;i++){
+        try{return await window.flowpayRead.getStream(id)}catch(e){await new Promise(r=>setTimeout(r,400))}
+      }
+      return window.flowpayRead.getStream(id);
+    }));
     const incoming=results
       .filter(r=>r.status==='fulfilled'&&Number(r.value.id)>0&&r.value.recipient.toLowerCase()===address.toLowerCase())
       .map(r=>r.value)
