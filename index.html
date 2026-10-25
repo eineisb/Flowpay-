@@ -363,7 +363,7 @@ async function loadIncoming(){
   const list=document.getElementById('incoming-list');
   list.innerHTML='<div class="stream-empty">Scanning...</div>';
   try{
-    const ids=Array.from({length:20},(_,i)=>i+1);
+    const ids=Array.from({length:50},(_,i)=>i+1);
     const results=await Promise.allSettled(ids.map(id=>window.flowpayRead.getStream(id)));
     const incoming=results
       .filter(r=>r.status==='fulfilled'&&Number(r.value.id)>0&&r.value.recipient.toLowerCase()===address.toLowerCase())
